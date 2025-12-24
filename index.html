@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>আমার গ্রাম - স্মার্ট ভিলেজ অ্যাপ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Hind Siliguri -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f2f5; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+        
+        .app-container { max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; position: relative; padding-bottom: calc(75px + env(safe-area-inset-bottom)); }
+        .nav-active { color: #16a34a; border-top: 2px solid #16a34a; }
+        .nav-btn { color: #65676b; position: relative; }
+        .hidden-custom { display: none !important; }
+        
+        input:focus, select:focus, textarea:focus { outline: 2px solid #16a34a; border-color: transparent; }
+
+        /* Sidebar Animation */
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
+        #sidebar.open { transform: translateX(0); }
+        .sidebar-overlay { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* Chat Bubbles */
+        .chat-bubble-me { background: #16a34a; color: white; border-radius: 18px 18px 0 18px; word-wrap: break-word; }
+        .chat-bubble-other { background: #e4e6eb; color: black; border-radius: 18px 18px 18px 0; word-wrap: break-word; }
+
+        /* Dropdown & Gradients */
+        .post-menu-dropdown { transform-origin: top right; transition: transform 0.1s ease-out, opacity 0.1s ease-out; }
+        .cover-photo-gradient { background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%); }
+
+        /* FAB Animation */
+        .fab-options { transition: all 0.3s ease-in-out; opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .fab-options.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .fab-btn { transition: transform 0.3s; }
+        .fab-btn.rotate { transform: rotate(45deg); background-color: #ef4444; border-color: #ef4444; }
+
+        /* Toast */
+        #toast-container { position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
+        .toast { background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 20px; border-radius: 50px; text-align: center; font-size: 14px; animation: fadeUp 0.3s ease-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .badge { position: absolute; top: -5px; right: 20%; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; border: 2px solid white; display: none; }
+        .badge.active { display: block; }
+        
+        /* Full Screen Comment Modal */
+        #comment-full-modal { transition: transform 0.3s ease-in-out; transform: translateY(100%); }
+        #comment-full-modal.open { transform: translateY(0); }
+        
+        /* Search Modal */
+        #search-modal { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        #search-modal.open { opacity: 1; pointer-events: auto; }
+
+        /* Poll Styles */
+        .poll-option { transition: all 0.2s; }
+        .poll-fill { transition: width 0.5s ease-out; }
+        
+        /* Loading Skeleton */
+        .skeleton { background: #e1e4e8; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* Image Fade In */
+        .img-loading { opacity: 0; transition: opacity 0.3s ease-in; }
+        .img-loaded { opacity: 1; }
+
+        /* Verified Badge Color */
+        .verified-badge { color: #1d9bf0; margin-left: 4px; font-size: 0.9em; }
+
+        /* Font Sizes Display */
+        body.text-large { font-size: 110%; }
+        body.text-small { font-size: 90%; }
+        
+        /* Emergency Pulse */
+        @keyframes emergency-pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .btn-emergency { animation: emergency-pulse 2s infinite; }
+    </style>
+</head>
+<body id="body-main">
+
+<!-- টোস্ট কন্টেইনার -->
+<div id="toast-container"></div>
+
+<!-- ১. অথেন্টিকেশন স্ক্রিন -->
+<div id="auth-screen" class="fixed inset-0 bg-white z-[200] flex flex-col items-center justify-center p-6 overflow-y-auto">
+    <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-tree text-green-600 text-4xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800">আমার গ্রাম</h1>
+        <p class="text-gray-500 mt-1">ডিজিটাল ভিলেজ সল্যুশন</p>
+    </div>
+    <div id="login-form" class="w-full max-w-sm">
+        <h2 class="text-xl font-bold mb-6 text-green-700 border-l-4 border-green-600 pl-3">লগইন করুন</h2>
+        <input type="email" id="login-email" placeholder="ইমেইল" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg mb-3 focus:bg-white">
+        <div class="relative w-full mb-2">
+            <input type="password" id="login-pass" placeholder="পাসওয়ার্ড" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg focus:bg-white pr-10">
+            <i onclick="togglePassword('login-pass', this)" class="fa-regular fa-eye absolute right-3 top-4 text-gray-500 cursor-pointer"></i>
+        </div>
+        <div class="text-right mb-6">
+            <span onclick="toggleAuth('forgot')" class="text-xs text-gray-500 hover:text-green-600 cursor-pointer">পাসওয়ার্ড ভুলে গেছেন?</span>
+        </div>
+        <button onclick="handleLogin()" id="btn-login-action" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-lg transition active:scale-95 flex justify-center items-center gap-2">লগইন</button>
+        <p class="mt-6 text-center text-sm text-gray-600">একাউন্ট নেই? <span onclick="toggleAuth('register')" class="text-green-600 font-bold cursor-pointer hover:underline">রেজিস্ট্রেশন করুন</span></p>
+    </div>
+    <div id="register-form" class="w-full max-w-sm hidden-custom">
+        <h2 class="text-xl font-bold mb-6 text-green-700 border-l-4 border-green-600 pl-3">নতুন একাউন্ট খুলুন</h2>
+        <div class="space-y-3">
+            <input type="text" id="reg-name" placeholder="আপনার নাম" class="w-full bg-gray-50 border p-3 rounded-lg">
+            <input type="email" id="reg-email" placeholder="ইমেইল" class="w-full bg-gray-50 border p-3 rounded-lg">
+            <input type="tel" id="reg-phone" placeholder="ফোন নাম্বার (১১ ডিজিট)" class="w-full bg-gray-50 border p-3 rounded-lg">
+            <div class="flex gap-3">
+                <div class="w-1/2"><label class="text-xs text-gray-500 ml-1 block mb-1">জন্ম তারিখ</label><input type="date" id="reg-dob" class="w-full bg-gray-50 border p-2 rounded-lg text-sm"></div>
+                <div class="w-1/2"><label class="text-xs text-gray-500 ml-1 block mb-1">লিঙ্গ</label><select id="reg-gender" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"><option value="Male">পুরুষ</option><option value="Female">মহিলা</option></select></div>
+            </div>
+            <div class="relative w-full">
+                <input type="password" id="reg-pass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ সংখ্যা)" class="w-full bg-gray-50 border p-3 rounded-lg pr-10">
+                <i onclick="togglePassword('reg-pass', this)" class="fa-regular fa-eye absolute right-3 top-4 text-gray-500 cursor-pointer"></i>
+            </div>
+        </div>
+        <button onclick="handleRegister()" id="btn-reg-action" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 mt-6 shadow-lg transition active:scale-95 flex justify-center items-center gap-2">রেজিস্ট্রেশন সম্পন্ন করুন</button>
+        <p class="mt-6 text-center text-sm text-gray-600">আগেই একাউন্ট আছে? <span onclick="toggleAuth('login')" class="text-green-600 font-bold cursor-pointer hover:underline">লগইন করুন</span></p>
+    </div>
+    <!-- Forgot Password Form -->
+    <div id="forgot-form" class="w-full max-w-sm hidden-custom">
+        <h2 class="text-xl font-bold mb-6 text-orange-600 border-l-4 border-orange-500 pl-3">পাসওয়ার্ড রিসেট</h2>
+        <p class="text-sm text-gray-500 mb-4">আপনার ইমেইল দিন, আমরা পাসওয়ার্ড পরিবর্তনের লিংক পাঠাবো।</p>
+        <input type="email" id="forgot-email" placeholder="আপনার ইমেইল" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-lg mb-6 focus:bg-white">
+        <button onclick="handleForgotPass()" id="btn-forgot-action" class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 shadow-lg transition active:scale-95 flex justify-center items-center gap-2">লিংক পাঠান</button>
+        <p class="mt-6 text-center text-sm text-gray-600"><span onclick="toggleAuth('login')" class="text-green-600 font-bold cursor-pointer hover:underline">লগইনে ফিরে যান</span></p>
+    </div>
+</div>
+
+<!-- ২. স্প্ল্যাশ স্ক্রিন -->
+<div id="splash-screen" class="fixed inset-0 bg-green-600 z-[150] flex flex-col items-center justify-center text-white transition-opacity duration-500">
+    <i class="fa-solid fa-tree text-7xl mb-6 animate-pulse"></i>
+    <div class="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
+</div>
+
+<!-- ৩. সাইডবার মেনু -->
+<div id="sidebar-overlay" onclick="toggleSidebar(false)" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-60 z-[140] backdrop-blur-sm"></div>
+<div id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 bg-white z-[145] shadow-2xl flex flex-col">
+    <div class="p-8 bg-green-600 text-white relative overflow-hidden pt-safe">
+        <div class="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-green-600 text-3xl mb-3 shadow-lg border-2 border-white/50">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <h3 id="sidebar-name" class="font-bold text-xl truncate flex items-center gap-1">নাম লোড হচ্ছে...</h3>
+        <p id="sidebar-phone" class="text-sm opacity-90">---</p>
+    </div>
+    <div class="flex-1 py-4 overflow-y-auto">
+        <ul class="space-y-1">
+            <li onclick="switchPage('profile'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-user w-5 text-green-600"></i> প্রোফাইল</li>
+            <li onclick="switchPage('people'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-users w-5 text-blue-500"></i> মানুষ খুজুন</li>
+            <li onclick="switchPage('market'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-store w-5 text-orange-500"></i> গ্রামীণ হাট</li>
+            <li onclick="switchPage('complaints'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-box-archive w-5 text-red-500"></i> অভিযোগ বক্স</li>
+            <li onclick="switchPage('settings'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-gear w-5 text-gray-500"></i> সেটিংস</li>
+            <div class="border-t my-2"></div>
+            <!-- New Sidebar Items -->
+            <li onclick="alert('যোগাযোগ: help@amargram.com'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-envelope w-5 text-teal-500"></i> যোগাযোগ</li>
+            <li onclick="alert('আপনার তথ্য সুরক্ষিত রাখা আমাদের দায়িত্ব। আমরা ৩য় পক্ষের সাথে তথ্য শেয়ার করি না।'); toggleSidebar(false)" class="px-6 py-3 hover:bg-green-50 cursor-pointer flex items-center gap-4 text-gray-700 transition"><i class="fa-solid fa-shield-halved w-5 text-purple-500"></i> প্রাইভেসি পলিসি</li>
+        </ul>
+    </div>
+    <div class="p-4 border-t bg-gray-50 pb-safe">
+        <button onclick="handleLogout()" class="w-full bg-white border border-red-200 text-red-600 py-2.5 rounded-lg font-bold hover:bg-red-50 flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-right-from-bracket"></i> লগআউট
+        </button>
+    </div>
+</div>
+
+<!-- ৪. মডাল সমূহ -->
+
+<!-- Global Search Modal -->
+<div id="search-modal" class="fixed inset-0 bg-white z-[190] flex flex-col">
+    <div class="flex items-center gap-3 p-4 border-b bg-white shadow-sm z-10 pt-safe sticky top-0">
+        <button onclick="toggleGlobalSearch(false)" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600">
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <div class="flex-1 relative">
+            <input type="text" id="global-search-input" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" onkeyup="handleGlobalSearch(this.value)" placeholder="মানুষ, পোস্ট বা পণ্য খুজুন..." class="w-full bg-gray-100 py-2.5 pl-4 pr-10 rounded-full text-sm focus:bg-white focus:ring-1 focus:ring-green-500 border-0">
+            <i class="fa-solid fa-search absolute right-4 top-3 text-gray-400 text-sm"></i>
+        </div>
+    </div>
+    <div id="global-search-results" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 pb-20">
+        <div class="text-center mt-20 text-gray-400">
+            <i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-30"></i>
+            <p>অনুসন্ধান করতে লিখুন</p>
+        </div>
+    </div>
+</div>
+
+<!-- ফুল স্ক্রিন কমেন্ট ভিউ -->
+<div id="comment-full-modal" class="fixed inset-0 bg-white z-[180] flex flex-col hidden-custom">
+    <div class="flex items-center justify-between p-4 border-b bg-white shadow-sm z-10 sticky top-0 pt-safe">
+        <div class="flex items-center gap-2">
+            <button onclick="closeFullCommentModal()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h3 class="font-bold text-gray-800">কমেন্টসমূহ</h3>
+        </div>
+        <span id="full-comment-count" class="text-xs bg-gray-100 px-2 py-1 rounded-full font-bold text-gray-600">0</span>
+    </div>
+    <div id="full-comments-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 pb-20"></div>
+    <div class="p-3 border-t bg-white flex gap-2 items-center sticky bottom-0 w-full pb-safe">
+        <input type="text" id="full-comment-input" placeholder="আপনার মতামত লিখুন..." class="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm border-0 focus:ring-1 focus:ring-green-500">
+        <button onclick="submitFullComment()" class="text-green-600 text-xl p-2 hover:bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center shadow-sm border border-gray-100"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<!-- পোস্ট মডাল -->
+<div id="post-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center hidden-custom p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl transform transition-all scale-100">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+            <h3 class="font-bold text-lg text-gray-700">নতুন পোস্ট</h3>
+            <button onclick="togglePostModal(false)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-500 transition"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <textarea id="post-text" class="w-full h-24 p-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white resize-none text-sm" placeholder="আপনার মনে কী আছে? গ্রামের মানুষকে জানান..."></textarea>
+        <!-- ইমেজ ইনপুট -->
+        <div class="mt-3">
+             <label class="block text-xs font-bold text-gray-500 mb-1">ছবি যুক্ত করুন (অপশনাল)</label>
+             <input type="file" id="post-image-file" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+        </div>
+        <button onclick="submitPost()" id="btn-post-submit" class="w-full bg-green-600 text-white font-bold py-2.5 mt-4 rounded-lg shadow hover:bg-green-700 transition flex justify-center items-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> পোস্ট করুন
+        </button>
+    </div>
+</div>
+
+<!-- পোল মডাল -->
+<div id="poll-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center hidden-custom p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl transform transition-all scale-100">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+            <h3 class="font-bold text-lg text-gray-700">পোল তৈরি করুন</h3>
+            <button onclick="togglePollModal(false)" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-500 transition"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="space-y-3">
+            <input type="text" id="poll-question" placeholder="প্রশ্ন লিখুন (যেমন: সেরা খেলা কোনটি?)" class="w-full bg-gray-50 border p-3 rounded-lg text-sm font-bold">
+            <input type="text" id="poll-opt-1" placeholder="অপশন ১" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+            <input type="text" id="poll-opt-2" placeholder="অপশন ২" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+            <input type="text" id="poll-opt-3" placeholder="অপশন ৩ (ঐচ্ছিক)" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+            <input type="text" id="poll-opt-4" placeholder="অপশন ৪ (ঐচ্ছিক)" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+        </div>
+        <button onclick="submitPoll()" class="w-full bg-blue-600 text-white font-bold py-2.5 mt-4 rounded-lg shadow hover:bg-blue-700 transition flex justify-center items-center gap-2">
+            <i class="fa-solid fa-square-poll-vertical"></i> পোল পোস্ট করুন
+        </button>
+    </div>
+</div>
+
+<!-- পণ্য বিক্রি মডাল -->
+<div id="sell-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[100] flex items-center justify-center hidden-custom p-4 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl relative">
+        <button onclick="toggleSellModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">পণ্য বিক্রি করুন</h3>
+        <div class="space-y-3">
+            <input type="text" id="sell-title" placeholder="পণ্যের নাম" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+            <input type="number" id="sell-price" placeholder="দাম (টাকা)" class="w-full bg-gray-50 border p-2 rounded-lg text-sm">
+            <textarea id="sell-desc" placeholder="বিবরণ এবং যোগাযোগ নম্বর..." rows="3" class="w-full bg-gray-50 border p-2 rounded-lg text-sm"></textarea>
+            <div>
+                 <label class="block text-xs font-bold text-gray-500 mb-1">পণ্যের ছবি</label>
+                 <input type="file" id="sell-image-file" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-orange-50 file:text-orange-700">
+            </div>
+        </div>
+        <button onclick="submitProduct()" id="btn-sell-submit" class="w-full bg-orange-500 text-white font-bold py-2.5 mt-4 rounded-lg shadow hover:bg-orange-600 transition flex justify-center items-center gap-2">বিজ্ঞাপন দিন</button>
+    </div>
+</div>
+
+<!-- ডোনার মডাল -->
+<div id="donor-modal" class="fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center hidden-custom p-4">
+    <div class="bg-white w-full max-w-sm rounded-xl p-6 shadow-2xl relative">
+        <button onclick="toggleDonorModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <h3 class="text-xl font-bold text-red-600 mb-1 text-center">রক্তদাতা হোন</h3>
+        <p class="text-xs text-gray-500 text-center mb-6">আপনার রক্তে বাঁচবে একটি প্রাণ ❤️</p>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">রক্তের গ্রুপ</label>
+                <select id="donor-blood-group" class="w-full border p-2.5 rounded-lg bg-gray-50 text-sm">
+                    <option value="">বাছাই করুন</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">যোগাযোগের নম্বর</label>
+                <input type="tel" id="donor-phone" class="w-full border p-2.5 rounded-lg bg-gray-50 text-sm" placeholder="017XXXXXXXX">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">শেষ রক্তদানের তারিখ</label>
+                <input type="date" id="donor-last-date" class="w-full border p-2.5 rounded-lg bg-gray-50 text-sm">
+            </div>
+        </div>
+        <button onclick="submitDonor()" class="w-full bg-red-600 text-white font-bold py-3 mt-6 rounded-lg shadow-lg hover:bg-red-700 transition">তালিকায় যুক্ত হন</button>
+    </div>
+</div>
+
+<!-- EMERGENCY BLOOD REQUEST MODAL (NEW) -->
+<div id="modal-blood-request" class="fixed inset-0 bg-black bg-opacity-80 z-[105] flex items-center justify-center hidden-custom p-4">
+    <div class="bg-white w-full max-w-sm rounded-xl p-6 shadow-2xl relative">
+        <button onclick="toggleBloodRequestModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <div class="text-center mb-5">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2 animate-pulse">
+                <i class="fa-solid fa-bell text-red-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-red-600">জরুরি রক্তের প্রয়োজন</h3>
+            <p class="text-xs text-red-500">নির্বাচিত গ্রুপের সকল ডোনারকে নোটিফিকেশন পাঠানো হবে</p>
+        </div>
+        <div class="space-y-3">
+             <select id="req-blood-group" class="w-full border-2 border-red-200 p-2.5 rounded-lg bg-red-50 text-sm font-bold text-red-800">
+                <option value="">কোন গ্রুপের রক্ত প্রয়োজন?</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+            </select>
+            <input type="text" id="req-location" placeholder="হাসপাতাল বা স্থান" class="w-full border p-2.5 rounded-lg bg-gray-50 text-sm">
+            <input type="tel" id="req-contact" placeholder="যোগাযোগের নম্বর" class="w-full border p-2.5 rounded-lg bg-gray-50 text-sm">
+        </div>
+        <button onclick="sendEmergencyBloodRequest()" id="btn-blood-req" class="w-full bg-red-600 text-white font-bold py-3 mt-6 rounded-lg shadow-lg hover:bg-red-700 transition btn-emergency">নোটিফিকেশন পাঠান</button>
+    </div>
+</div>
+
+
+<!-- প্রোফাইল এডিট মডাল -->
+<div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-80 z-[160] flex items-center justify-center hidden-custom p-4">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+        <button onclick="toggleEditProfile(false)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <h3 class="text-lg font-bold text-gray-800 mb-5 border-b pb-2">তথ্য পরিবর্তন করুন</h3>
+        <div class="space-y-4">
+            <div><label class="text-xs font-bold text-gray-500 block mb-1">নাম</label><input type="text" id="edit-name" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></div>
+            <div><label class="text-xs font-bold text-gray-500 block mb-1">পেশা</label><input type="text" id="edit-profession" placeholder="যেমন: শিক্ষক, ব্যবসায়ী" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></div>
+            <div><label class="text-xs font-bold text-gray-500 block mb-1">বর্তমান ঠিকানা</label><input type="text" id="edit-location" placeholder="গ্রাম/পাড়া" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></div>
+            <div><label class="text-xs font-bold text-gray-500 block mb-1">বায়ো (সম্পর্কে)</label><textarea id="edit-bio" rows="2" placeholder="নিজের সম্পর্কে কিছু লিখুন..." class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></textarea></div>
+        </div>
+        <button onclick="saveProfileChanges()" class="w-full bg-green-600 text-white font-bold py-3 mt-6 rounded-lg shadow hover:bg-green-700 transition">সংরক্ষণ করুন</button>
+    </div>
+</div>
+
+<!-- ৫. মেইন অ্যাপ কন্টেইনার -->
+<div class="app-container hidden-custom" id="main-app">
+    
+    <!-- হেডার -->
+    <header class="bg-white text-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center shadow-sm border-b pt-safe">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar(true)" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-200 transition">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <h1 class="text-xl font-bold text-green-600 hidden xs:block">আমার গ্রাম</h1>
+        </div>
+        <div class="flex items-center gap-3">
+             <button onclick="toggleGlobalSearch(true)" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 hover:bg-gray-200">
+                <i class="fa-solid fa-magnifying-glass"></i>
+             </button>
+             <div onclick="switchPage('notifications')" class="cursor-pointer relative">
+                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 border border-gray-200 hover:bg-gray-200">
+                    <i class="fa-regular fa-bell"></i>
+                </div>
+                <span id="header-badge-notice" class="badge">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- মেইন কন্টেন্ট -->
+    <main id="content-pages">
+        
+        <!-- === পেজ: হোম === -->
+        <div id="page-home" class="p-0 animate-fade">
+            <div id="live-notices"></div> 
+            <!-- শর্টকাট -->
+            <div class="grid grid-cols-4 gap-2 p-4 bg-white mb-2 shadow-sm">
+                <div onclick="switchPage('directory')" class="cursor-pointer group">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex mx-auto items-center justify-center group-hover:bg-blue-100 transition shadow-sm border border-blue-100"><i class="fa-solid fa-address-book text-xl"></i></div><p class="text-xs mt-2 font-bold text-center text-gray-600">ডিরেক্টরি</p>
+                </div>
+                <div onclick="switchPage('blood')" class="cursor-pointer group">
+                    <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex mx-auto items-center justify-center group-hover:bg-red-100 transition shadow-sm border border-red-100"><i class="fa-solid fa-droplet text-xl"></i></div><p class="text-xs mt-2 font-bold text-center text-gray-600">রক্তদান</p>
+                </div>
+                <div onclick="switchPage('market')" class="cursor-pointer group">
+                    <div class="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex mx-auto items-center justify-center group-hover:bg-orange-100 transition shadow-sm border border-orange-100"><i class="fa-solid fa-store text-xl"></i></div><p class="text-xs mt-2 font-bold text-center text-gray-600">হাট</p>
+                </div>
+                <div onclick="switchPage('complaints')" class="cursor-pointer group">
+                    <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex mx-auto items-center justify-center group-hover:bg-red-100 transition shadow-sm border border-red-100"><i class="fa-solid fa-box-archive text-xl"></i></div><p class="text-xs mt-2 font-bold text-center text-gray-600">অভিযোগ</p>
+                </div>
+            </div>
+            <!-- নিউজ ফিড -->
+            <div class="bg-gray-100 pb-20">
+                <div id="news-feed" class="px-0 space-y-3 min-h-[300px] mt-2">
+                    <div class="flex flex-col gap-3 p-4">
+                        <div class="h-40 w-full skeleton"></div>
+                        <div class="h-40 w-full skeleton"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: নোটিফিকেশন === -->
+        <div id="page-notifications" class="hidden p-4 min-h-screen bg-gray-50 pb-20">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-500 pl-3">নোটিফিকেশন</h2>
+            <div id="notifications-list" class="space-y-3">
+                <p class="text-center text-gray-400 mt-10">লোড হচ্ছে...</p>
+            </div>
+        </div>
+
+        <!-- === পেজ: মানুষ === -->
+        <div id="page-people" class="hidden p-0 min-h-screen bg-gray-50 pb-20">
+            <div class="bg-white p-4 sticky top-16 z-30 shadow-sm border-b">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">মানুষ খুজুন</h2>
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <div class="flex gap-2">
+                         <input type="text" id="search-people" onkeydown="if(event.key==='Enter') filterUsers()" placeholder="নাম দিয়ে খুজুন..." class="w-full bg-gray-100 p-2.5 pl-10 rounded-full text-sm focus:bg-white border border-transparent focus:border-green-200">
+                         <button onclick="filterUsers()" class="bg-green-600 text-white px-4 rounded-full text-sm font-bold">Search</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 space-y-6">
+                <!-- ফ্রেন্ড রিকোয়েস্ট -->
+                <div id="friend-requests-section" class="hidden">
+                     <h3 class="font-bold text-gray-700 mb-2 border-l-4 border-yellow-500 pl-2 text-sm">ফ্রেন্ড রিকোয়েস্ট</h3>
+                     <div id="friend-requests-list" class="space-y-2"></div>
+                </div>
+
+                <!-- আমার বন্ধু -->
+                <div>
+                     <div class="flex justify-between items-center mb-2">
+                         <h3 class="font-bold text-gray-700 border-l-4 border-green-500 pl-2 text-sm">আমার বন্ধু</h3>
+                         <button onclick="switchPage('friends-list')" class="text-xs text-green-600 font-bold hover:underline">সব দেখুন</button>
+                     </div>
+                     <div id="my-friends-preview-list" class="grid grid-cols-2 gap-2">
+                         <p class="col-span-2 text-center text-gray-400 text-xs py-2">লোড হচ্ছে...</p>
+                     </div>
+                </div>
+
+                <!-- সাজেশন -->
+                <div>
+                     <h3 class="font-bold text-gray-700 mb-2 border-l-4 border-blue-500 pl-2 text-sm">রেজাল্ট / সাজেশন</h3>
+                     <div id="users-list" class="space-y-3">
+                        <p class="text-center text-gray-400 text-sm">অনুসন্ধান করুন অথবা অপেক্ষা করুন...</p>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: মেসেজ === -->
+        <div id="page-messages" class="hidden p-0 min-h-screen bg-white pb-20">
+            <div id="chat-list-view" class="h-full">
+                <div class="p-4 border-b">
+                     <h2 class="text-xl font-bold text-gray-800">মেসেজ</h2>
+                </div>
+                <div class="px-4 py-3 border-b bg-gray-50 overflow-x-auto whitespace-nowrap">
+                    <h4 class="text-xs font-bold text-gray-500 mb-2">Active Friends</h4>
+                    <div id="quick-chat-friends" class="flex gap-4">
+                        <p class="text-xs text-gray-400">লোড হচ্ছে...</p>
+                    </div>
+                </div>
+                <div id="chat-list-container" class="space-y-0">
+                    <p class="text-center text-gray-400 mt-10 text-sm">লোড হচ্ছে...</p>
+                </div>
+            </div>
+            <!-- Conversation View -->
+            <div id="chat-conversation-view" class="hidden h-[calc(100vh-130px)] flex flex-col bg-gray-50 relative">
+                <div class="bg-white p-3 border-b flex items-center gap-3 sticky top-0 z-20 shadow-sm">
+                    <button onclick="closeChat()" class="text-gray-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fa-solid fa-arrow-left"></i></button>
+                    <div class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold border border-green-200" id="chat-header-img">U</div>
+                    <h3 class="font-bold text-gray-800" id="chat-header-name">User</h3>
+                </div>
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f0f2f5]"></div>
+                <div class="bg-white p-3 border-t flex gap-2 items-center absolute bottom-0 w-full pb-safe">
+                    <input type="text" id="msg-input" placeholder="মেসেজ লিখুন..." class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm border-0 focus:ring-1 focus:ring-green-500">
+                    <button onclick="sendMsg()" class="text-green-600 text-xl p-2 hover:bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: হাট === -->
+        <div id="page-market" class="hidden p-4 bg-gray-100 min-h-screen pb-20">
+             <div class="flex items-center mb-5 sticky top-16 z-30 bg-gray-100 py-2 gap-3">
+                 <button onclick="switchPage('home')" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></button>
+                 <h2 class="text-xl font-bold text-gray-800 border-l-4 border-orange-500 pl-3 flex-1">গ্রামের হাট</h2>
+                 <button onclick="toggleSellModal(true)" class="bg-orange-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow hover:bg-orange-600 flex items-center gap-2">
+                     <i class="fa-solid fa-plus"></i> বিক্রি করুন
+                 </button>
+             </div>
+             <div id="market-list" class="grid grid-cols-2 gap-3">
+                <p class="col-span-2 text-center text-gray-400 py-10">লোড হচ্ছে...</p>
+             </div>
+        </div>
+
+        <!-- === পেজ: নিজের প্রোফাইল === -->
+        <div id="page-profile" class="hidden bg-[#f0f2f5] min-h-screen pb-20">
+            <div class="relative bg-white shadow-sm pb-4 mb-3">
+                <div class="h-48 w-full cover-photo-gradient relative"></div>
+                <div class="px-4">
+                    <div class="relative -mt-20 mb-3 flex flex-col items-center">
+                         <div class="w-36 h-36 rounded-full p-1 bg-white shadow-md">
+                            <div class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-5xl overflow-hidden border-4 border-white">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                         </div>
+                    </div>
+                    <div class="text-center">
+                        <h2 id="profile-name" class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-1">...</h2>
+                        <p id="profile-bio" class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">...</p>
+                    </div>
+                    <div class="flex gap-3 mt-5 border-b pb-4">
+                        <button onclick="toggleEditProfile(true)" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-green-700 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-pen"></i> এডিট প্রোফাইল
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 shadow-sm mb-3">
+                <h3 class="font-bold text-lg text-gray-800 mb-3">বিস্তারিত</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-briefcase w-5 text-center text-gray-400"></i><span class="text-sm">পেশা: <strong id="profile-profession" class="text-gray-800 ml-1">---</strong></span></div>
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-location-dot w-5 text-center text-gray-400"></i><span class="text-sm">বসবাস: <strong id="profile-location" class="text-gray-800 ml-1">---</strong></span></div>
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-phone w-5 text-center text-gray-400"></i><span class="text-sm" id="profile-phone">---</span></div>
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-envelope w-5 text-center text-gray-400"></i><span class="text-sm" id="profile-email">---</span></div>
+                </div>
+            </div>
+            <div class="bg-white p-4 shadow-sm mb-3">
+                <div class="flex justify-between items-center mb-3">
+                    <div><h3 class="font-bold text-lg text-gray-800">বন্ধুবান্ধব</h3><p class="text-xs text-gray-500" id="friends-count-me">0 জন বন্ধু</p></div>
+                    <button onclick="showAllFriends('me')" class="text-green-600 text-sm hover:bg-gray-100 px-2 py-1 rounded">সব দেখুন</button>
+                </div>
+                <div id="profile-friends-preview-me" class="grid grid-cols-3 gap-2"><p class="col-span-3 text-center text-xs text-gray-400 py-4">লোড হচ্ছে...</p></div>
+            </div>
+            <div class="px-0">
+                <div class="bg-white p-3 mb-2 shadow-sm flex items-center gap-2"><h3 class="font-bold text-gray-700">পোস্টসমূহ</h3></div>
+                <div id="my-posts-feed" class="space-y-3"><p class="text-center text-gray-400 text-sm">লোড হচ্ছে...</p></div>
+            </div>
+        </div>
+
+        <!-- === পেজ: অন্য ইউজারের প্রোফাইল === -->
+        <div id="page-view-profile" class="hidden bg-[#f0f2f5] min-h-screen pb-20">
+             <div class="bg-white p-2 sticky top-0 z-30 shadow-sm flex items-center gap-2 pt-safe">
+                <button onclick="switchPage('home')" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2 class="font-bold text-lg text-gray-800" id="view-profile-header-name">প্রোফাইল</h2>
+            </div>
+            <div class="relative bg-white shadow-sm pb-4 mb-3">
+                <div class="h-48 w-full bg-gradient-to-r from-blue-500 to-indigo-600 relative"></div>
+                <div class="px-4">
+                    <div class="relative -mt-20 mb-3 flex flex-col items-center">
+                         <div class="w-36 h-36 rounded-full p-1 bg-white shadow-md">
+                            <div class="w-full h-full bg-gray-200 rounded-full flex items-center justify-center text-blue-600 text-5xl overflow-hidden font-bold border-4 border-white">
+                                <span id="view-profile-initial">U</span>
+                            </div>
+                         </div>
+                    </div>
+                    <div class="text-center">
+                        <h2 id="view-profile-name" class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-1">...</h2>
+                        <p id="view-profile-bio" class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">---</p>
+                    </div>
+                    <div id="view-profile-actions" class="flex gap-3 mt-5 border-b pb-4 px-2"></div>
+                </div>
+            </div>
+            <div class="bg-white p-4 shadow-sm mb-3">
+                <h3 class="font-bold text-lg text-gray-800 mb-3">বিস্তারিত</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-briefcase w-5 text-center text-gray-400"></i><span class="text-sm">পেশা: <strong id="view-profile-profession" class="text-gray-800 ml-1">---</strong></span></div>
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-location-dot w-5 text-center text-gray-400"></i><span class="text-sm">বসবাস: <strong id="view-profile-location" class="text-gray-800 ml-1">---</strong></span></div>
+                    <div class="flex items-center gap-3 text-gray-600"><i class="fa-solid fa-phone w-5 text-center text-gray-400"></i><span class="text-sm" id="view-profile-phone">---</span></div>
+                </div>
+            </div>
+            <div class="bg-white p-4 shadow-sm mb-3">
+                <div class="flex justify-between items-center mb-3">
+                    <div><h3 class="font-bold text-lg text-gray-800">বন্ধুবান্ধব</h3><p class="text-xs text-gray-500" id="friends-count-other">0 জন বন্ধু</p></div>
+                    <button id="btn-view-friends-other" class="text-blue-600 text-sm hover:bg-gray-100 px-2 py-1 rounded">সব দেখুন</button>
+                </div>
+                <div id="profile-friends-preview-other" class="grid grid-cols-3 gap-2"><p class="col-span-3 text-center text-xs text-gray-400 py-4">লোড হচ্ছে...</p></div>
+            </div>
+            <div class="px-0">
+                <div class="bg-white p-3 mb-2 shadow-sm border-t border-b border-gray-100"><h3 id="view-profile-posts-title" class="font-bold text-gray-700">পোস্টসমূহ</h3></div>
+                <div id="view-profile-posts-feed" class="space-y-3 pb-10"><p class="text-center text-gray-400 text-sm">লোড হচ্ছে...</p></div>
+            </div>
+        </div>
+        
+        <!-- === পেজ: ফ্রেন্ড লিস্ট === -->
+        <div id="page-friends-list" class="hidden p-4 min-h-screen bg-gray-50 pb-20">
+            <button onclick="window.history.back()" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> ফিরে যান</button>
+            <h2 class="text-xl font-bold mb-5 border-l-4 border-green-500 pl-3 text-gray-700">সকল বন্ধু</h2>
+            <div id="all-friends-container" class="grid grid-cols-1 gap-3"><p class="text-center text-gray-400 mt-10">লোড হচ্ছে...</p></div>
+        </div>
+
+        <!-- === পেজ: রক্তদান (UPDATED) === -->
+        <div id="page-blood" class="hidden p-4 bg-gray-50 min-h-screen">
+            <button onclick="switchPage('home')" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> ফিরে যান</button>
+            
+            <!-- Hero Card -->
+            <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-center text-white mb-6 shadow-lg relative overflow-hidden">
+                <i class="fa-solid fa-heart-pulse absolute -right-6 -bottom-6 text-9xl opacity-20"></i>
+                <h2 class="text-2xl font-bold mb-2">রক্ত দিন, জীবন বাঁচান</h2>
+                <div class="flex gap-2 justify-center mt-4">
+                     <button onclick="toggleDonorModal(true)" class="bg-white text-red-600 px-4 py-2 rounded-full font-bold shadow-md text-xs hover:bg-red-50 transition transform hover:scale-105">
+                        ডোনার হন
+                    </button>
+                    <!-- NEW: Emergency Button -->
+                     <button onclick="toggleBloodRequestModal(true)" class="bg-red-800 text-white px-4 py-2 rounded-full font-bold shadow-md text-xs border border-red-400 animate-pulse hover:bg-red-900 transition transform hover:scale-105">
+                        জরুরি রক্তের প্রয়োজন
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-700 border-l-4 border-red-500 pl-3">ডোনার তালিকা</h3>
+                <select id="blood-filter" onchange="filterDonors()" class="text-xs bg-white border p-1 rounded-lg">
+                    <option value="all">সকল গ্রুপ</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                </select>
+            </div>
+            <div id="donor-list" class="space-y-3 pb-20">
+                <p class="text-center text-gray-400 text-sm py-4">ডোনার লোড হচ্ছে...</p>
+            </div>
+        </div>
+
+        <!-- === পেজ: সেবা (Services) === -->
+        <div id="page-services" class="hidden p-4 pb-20">
+            <button onclick="switchPage('home')" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> ফিরে যান</button>
+            <h2 class="text-xl font-bold mb-5 text-purple-700 border-l-4 border-purple-500 pl-3">ইউনিয়ন সেবা</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-6 rounded-xl text-center shadow-sm border border-purple-100">
+                    <i class="fa-solid fa-file-signature text-3xl text-purple-600 mb-3"></i>
+                    <p class="font-bold text-sm text-gray-700">জন্ম নিবন্ধন</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl text-center shadow-sm border border-purple-100">
+                    <i class="fa-solid fa-id-card text-3xl text-purple-600 mb-3"></i>
+                    <p class="font-bold text-sm text-gray-700">নাগরিক সনদ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: ডিরেক্টরি === -->
+        <div id="page-directory" class="hidden p-4 bg-gray-50 min-h-screen pb-20">
+            <button onclick="switchPage('home')" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> ফিরে যান</button>
+            <h2 class="text-xl font-bold mb-5 border-l-4 border-blue-500 pl-3 text-gray-700">জরুরি সেবা ডিরেক্টরি</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <div onclick="openDirectoryCategory('pharmacy', 'ফার্মেসি')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-green-50 transition border border-gray-100">
+                    <i class="fa-solid fa-pills text-2xl text-green-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">ফার্মেসি</span>
+                </div>
+                <div onclick="openDirectoryCategory('doctor', 'ডাক্তার')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition border border-gray-100">
+                    <i class="fa-solid fa-user-doctor text-2xl text-blue-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">ডাক্তার</span>
+                </div>
+                <div onclick="openDirectoryCategory('hospital', 'হাসপাতাল')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-red-50 transition border border-gray-100">
+                    <i class="fa-solid fa-hospital text-2xl text-red-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">হাসপাতাল</span>
+                </div>
+                <div onclick="openDirectoryCategory('ambulance', 'অ্যাম্বুলেন্স')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-yellow-50 transition border border-gray-100">
+                    <i class="fa-solid fa-truck-medical text-2xl text-yellow-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">অ্যাম্বুলেন্স</span>
+                </div>
+                <div onclick="openDirectoryCategory('fire', 'ফায়ার সার্ভিস')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 transition border border-gray-100">
+                    <i class="fa-solid fa-fire-extinguisher text-2xl text-orange-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">ফায়ার সার্ভিস</span>
+                </div>
+                <div onclick="openDirectoryCategory('police', 'পুলিশ')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-50 transition border border-gray-100">
+                    <i class="fa-solid fa-shield-halved text-2xl text-indigo-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">পুলিশ</span>
+                </div>
+                 <div onclick="openDirectoryCategory('union', 'ইউনিয়ন পরিষদ')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center justify-center cursor-pointer hover:bg-teal-50 transition border border-gray-100 col-span-3">
+                    <i class="fa-solid fa-building-columns text-2xl text-teal-600 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-600">ইউনিয়ন পরিষদ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: ডিরেক্টরি লিস্ট === -->
+        <div id="page-directory-list" class="hidden p-4 bg-gray-50 min-h-screen pb-20">
+            <button onclick="switchPage('directory')" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> সকল ক্যাটাগরি</button>
+            <h2 id="directory-list-title" class="text-xl font-bold mb-5 border-l-4 border-blue-500 pl-3 text-gray-700">তালিকা</h2>
+            <div id="directory-items-container" class="space-y-3">
+                <p class="text-center text-gray-400 mt-10">লোড হচ্ছে...</p>
+            </div>
+        </div>
+
+        <!-- === পেজ: অভিযোগ বক্স === -->
+        <div id="page-complaints" class="hidden p-4 bg-gray-50 min-h-screen pb-20">
+            <button onclick="switchPage('home')" class="mb-4 text-gray-500"><i class="fa-solid fa-arrow-left"></i> ফিরে যান</button>
+            <h2 class="text-xl font-bold mb-5 border-l-4 border-red-500 pl-3 text-gray-700">ডিজিটাল অভিযোগ বক্স</h2>
+            
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+                <h3 class="font-bold text-gray-800 mb-3 text-sm">নতুন অভিযোগ করুন</h3>
+                <div class="space-y-3">
+                    <select id="complaint-type" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm">
+                        <option value="General">সাধারণ অভিযোগ</option>
+                        <option value="Road">রাস্তাঘাট</option>
+                        <option value="Water">পানি ও পয়নিষ্কাশন</option>
+                        <option value="Dispute">পারিবারিক/জমি বিরোধ</option>
+                        <option value="Other">অন্যান্য</option>
+                    </select>
+                    <textarea id="complaint-text" rows="3" placeholder="বিস্তারিত লিখুন..." class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></textarea>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="complaint-anon" class="w-4 h-4 text-green-600 rounded">
+                        <label for="complaint-anon" class="text-xs text-gray-600">নাম গোপন রাখুন (Anonymous)</label>
+                    </div>
+                    <button onclick="submitComplaint()" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-lg shadow hover:bg-red-700 text-sm">জমা দিন</button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-gray-700 mb-3 text-sm">আমার অভিযোগসমূহ</h3>
+                <div id="my-complaints-list" class="space-y-3">
+                    <p class="text-center text-gray-400 text-xs py-4">কোনো অভিযোগ নেই</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- === পেজ: সেটিংস === -->
+        <div id="page-settings" class="hidden p-0 bg-gray-100 min-h-screen pb-20">
+             <div class="bg-white p-4 sticky top-0 z-30 shadow-sm border-b pt-safe flex items-center gap-2">
+                <button onclick="switchPage('home')" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2 class="text-xl font-bold text-gray-800">সেটিংস</h2>
+            </div>
+            
+            <div class="p-4 space-y-4">
+                <!-- Account -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-3 bg-gray-50 border-b font-bold text-gray-700 text-sm">একাউন্ট</div>
+                    <div class="p-4 space-y-4">
+                        <div onclick="toggleEditProfile(true)" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <span class="text-sm text-gray-700">প্রোফাইল এডিট</span>
+                            <i class="fa-solid fa-pen-to-square text-gray-400"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-2">
+                            <span class="text-sm text-gray-700">মোবাইল/ইমেইল গোপন রাখুন</span>
+                            <input type="checkbox" onchange="togglePrivacy(this.checked)" id="setting-privacy-toggle" class="w-5 h-5 text-green-600 rounded">
+                        </div>
+                        <div onclick="toggleAuth('forgot'); handleLogout()" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                            <span class="text-sm text-gray-700">পাসওয়ার্ড পরিবর্তন</span>
+                            <i class="fa-solid fa-key text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-3 bg-gray-50 border-b font-bold text-gray-700 text-sm">নোটিফিকেশন</div>
+                    <div class="p-4 space-y-4">
+                        <div class="flex items-center justify-between p-2">
+                            <span class="text-sm text-gray-700">রক্তদান অ্যালার্ট</span>
+                            <input type="checkbox" checked class="w-5 h-5 text-green-600 rounded">
+                        </div>
+                        <div class="flex items-center justify-between p-2">
+                            <span class="text-sm text-gray-700">বাজার দর আপডেট</span>
+                            <input type="checkbox" checked class="w-5 h-5 text-green-600 rounded">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display (Updated with LocalStorage) -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-3 bg-gray-50 border-b font-bold text-gray-700 text-sm">ডিসপ্লে</div>
+                    <div class="p-4 flex gap-4">
+                        <button onclick="changeFontSize('small')" class="flex-1 border py-2 rounded hover:bg-gray-50 text-sm">ছোট ফন্ট</button>
+                        <button onclick="changeFontSize('normal')" class="flex-1 border py-2 rounded hover:bg-gray-50 text-sm font-bold bg-gray-100">স্বাভাবিক</button>
+                        <button onclick="changeFontSize('large')" class="flex-1 border py-2 rounded hover:bg-gray-50 text-lg">বড় ফন্ট</button>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-red-100">
+                    <div class="p-3 bg-red-50 border-b font-bold text-red-700 text-sm">ডেঞ্জার জোন</div>
+                    <div class="p-4">
+                        <button onclick="handleDeleteAccount()" class="w-full border border-red-500 text-red-600 py-2 rounded-lg font-bold text-sm hover:bg-red-50">একাউন্ট ডিলিট করুন</button>
+                    </div>
+                </div>
+                 <div class="text-center text-xs text-gray-400 mt-4">ভার্সন ১.০.০ | সাপোর্ট: help@amargram.com</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- বটম নেভিগেশন -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 z-50 text-gray-500 max-w-[480px] mx-auto shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-safe">
+        <div onclick="switchPage('home')" class="nav-btn w-1/5 text-center cursor-pointer nav-active transition py-1" id="btn-home"><i class="fa-solid fa-house text-xl mb-1"></i><p class="text-[10px] font-medium">হোম</p></div>
+        <div onclick="switchPage('notifications')" class="nav-btn w-1/5 text-center cursor-pointer transition py-1" id="btn-notifications"><i class="fa-solid fa-bell text-xl mb-1"></i><span id="nav-badge-notice" class="badge">0</span><p class="text-[10px] font-medium">নোটিশ</p></div>
+        <div onclick="switchPage('messages')" class="nav-btn w-1/5 text-center cursor-pointer transition py-1" id="btn-messages"><i class="fa-solid fa-comments text-xl mb-1"></i><p class="text-[10px] font-medium">মেসেজ</p></div>
+        <div onclick="switchPage('people')" class="nav-btn w-1/5 text-center cursor-pointer transition py-1" id="btn-people"><i class="fa-solid fa-users text-xl mb-1"></i><p class="text-[10px] font-medium">মানুষ</p></div>
+        <div onclick="switchPage('profile')" class="nav-btn w-1/5 text-center cursor-pointer transition py-1" id="btn-profile"><i class="fa-solid fa-user text-xl mb-1"></i><p class="text-[10px] font-medium">প্রোফাইল</p></div>
+    </nav>
+
+    <!-- ফ্লোটিং অ্যাকশন বাটন এবং অপশন -->
+    <div class="fixed bottom-20 right-4 z-40 flex flex-col items-center gap-3 pb-safe">
+        <div id="fab-options" class="fab-options flex flex-col gap-3">
+            <button onclick="togglePostModal(true); toggleFab()" class="bg-white text-gray-700 w-12 h-12 rounded-full shadow-lg flex items-center justify-center border border-gray-100 hover:bg-gray-50">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="togglePollModal(true); toggleFab()" class="bg-white text-blue-600 w-12 h-12 rounded-full shadow-lg flex items-center justify-center border border-gray-100 hover:bg-blue-50">
+                <i class="fa-solid fa-square-poll-vertical"></i>
+            </button>
+        </div>
+        <div onclick="toggleFab()" id="main-fab" class="fab-btn bg-green-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl cursor-pointer hover:bg-green-700 border-2 border-white">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, get, update, remove, query, limitToLast, runTransaction, startAt, endAt, orderByChild } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBTAXP2ekY6BjX8HR3cxQkFRhmQZcGfDVw",
+        authDomain: "local-village-5e091.firebaseapp.com",
+        databaseURL: "https://local-village-5e091-default-rtdb.firebaseio.com",
+        projectId: "local-village-5e091",
+        storageBucket: "local-village-5e091.firebasestorage.app",
+        messagingSenderId: "818594541858",
+        appId: "1:818594541858:web:custom-generated"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    let currentUser = null;
+    let userDetails = {};
+    let allUsers = []; 
+    let myFriends = [];
+    let currentChatUser = null;
+    let postsDataGlobal = {};
+    let allDonors = [];
+    let currentFullPostId = null;
+    let globalMarketItems = []; // To store market items for search
+    let globalDirectory = {}; // To store directory items for search
+
+    // === Security: XSS Prevention Helper ===
+    window.escapeHTML = (str) => {
+        if (!str) return "";
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Helper: Toast
+    window.showToast = (msg, type = 'success') => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = msg;
+        toast.style.borderLeft = type === 'error' ? "4px solid #ef4444" : "4px solid #22c55e";
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(()=> toast.remove(), 300); }, 3000);
+    }
+    
+    // Helper: Toggle Password
+    window.togglePassword = (id, icon) => {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    };
+
+    // Helper: Bangla Time Ago
+    function timeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return "এইমাত্র";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + " মিনিট আগে";
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + " ঘণ্টা আগে";
+        const days = Math.floor(hours / 24);
+        if (days < 30) return days + " দিন আগে";
+        const months = Math.floor(days / 30);
+        if (months < 12) return months + " মাস আগে";
+        const years = Math.floor(months / 12);
+        return years + " বছর আগে";
+    }
+
+    // Helper: Verified Badge Logic
+    function checkUserBadge(user) {
+        if (!user) return "";
+        const verifiedRoles = ['chairman', 'member', 'admin', 'doctor'];
+        const role = user.role ? user.role.toLowerCase() : '';
+        if (user.isVerified || verifiedRoles.includes(role)) {
+            return `<i class="fa-solid fa-circle-check verified-badge" title="Verified"></i>`;
+        }
+        return "";
+    }
+
+    // Auth Logic
+    onAuthStateChanged(auth, (user) => {
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
+        const splash = document.getElementById('splash-screen');
+        setTimeout(() => { splash.classList.add('hidden-custom'); }, 1500);
+
+        if (user) {
+            currentUser = user;
+            authScreen.classList.add('hidden-custom');
+            mainApp.classList.remove('hidden-custom');
+            
+            // Apply saved font size
+            const savedSize = localStorage.getItem('fontSize');
+            if(savedSize) changeFontSize(savedSize);
+
+            if (!history.state) {
+                history.replaceState({ page: 'home' }, "", "#home");
+            }
+
+            onValue(ref(db, 'users/' + user.uid), (snap) => {
+                userDetails = snap.val() || {};
+                updateUIWithUserData();
+                loadFriendsPreview(user.uid, 'me');
+                
+                if(document.getElementById('setting-privacy-toggle')) {
+                    document.getElementById('setting-privacy-toggle').checked = userDetails.privacy_hide_contact || false;
+                }
+            });
+            
+            onValue(ref(db, `users/${user.uid}/friends`), (snap) => {
+                 myFriends = snap.exists() ? Object.keys(snap.val()) : [];
+                 loadQuickChatFriends();
+            });
+
+            loadUsersLimited();
+            onValue(ref(db, 'directory'), (snap) => { globalDirectory = snap.val() || {}; });
+
+            listenForFriendRequests(user.uid);
+            listenForNotifications(user.uid);
+            loadChatList(user.uid);
+            loadMyComplaints();
+
+        } else {
+            currentUser = null;
+            authScreen.classList.remove('hidden-custom');
+            mainApp.classList.add('hidden-custom');
+            document.getElementById('login-form').classList.remove('hidden-custom');
+            document.getElementById('register-form').classList.add('hidden-custom');
+            document.getElementById('forgot-form').classList.add('hidden-custom');
+        }
+    });
+
+    function loadUsersLimited() {
+         onValue(query(ref(db, 'users'), limitToLast(50)), (snap) => {
+            allUsers = []; const data = snap.val();
+            if(data) {
+                Object.values(data).forEach(u => { if(u.uid !== currentUser.uid) allUsers.push(u); });
+                updatePeopleTab();
+                renderSuggestions(allUsers);
+            }
+        });
+    }
+
+    function updateUIWithUserData() {
+        const badge = checkUserBadge(userDetails);
+        document.getElementById('sidebar-name').innerHTML = (userDetails.name || "অজ্ঞাত") + badge;
+        document.getElementById('sidebar-phone').innerText = userDetails.phone || userDetails.email;
+        document.getElementById('profile-name').innerHTML = (userDetails.name || "নাম নেই") + badge;
+        document.getElementById('profile-bio').innerText = userDetails.bio || "নিজের সম্পর্কে কিছু লিখুন...";
+        document.getElementById('profile-profession').innerText = userDetails.profession || "উল্লেখ নেই";
+        document.getElementById('profile-location').innerText = userDetails.location || "উল্লেখ নেই";
+        document.getElementById('profile-phone').innerHTML = `${userDetails.phone || "ফোন নেই"}`;
+        document.getElementById('profile-email').innerHTML = `${userDetails.email}`;
+        
+        document.getElementById('edit-name').value = userDetails.name || "";
+        document.getElementById('edit-profession').value = userDetails.profession || "";
+        document.getElementById('edit-location').value = userDetails.location || "";
+        document.getElementById('edit-bio').value = userDetails.bio || "";
+        if(userDetails.phone) document.getElementById('donor-phone').value = userDetails.phone;
+    }
+
+    window.saveProfileChanges = () => {
+        const name = document.getElementById('edit-name').value.trim();
+        const prof = document.getElementById('edit-profession').value.trim();
+        const loc = document.getElementById('edit-location').value.trim();
+        const bio = document.getElementById('edit-bio').value.trim();
+
+        if(!name) return showToast("নাম আবশ্যক", 'error');
+
+        update(ref(db, 'users/' + currentUser.uid), {
+            name: name, profession: prof, location: loc, bio: bio
+        }).then(() => {
+            showToast("প্রোফাইল আপডেট হয়েছে!");
+            toggleEditProfile(false);
+        }).catch(e => showToast("ত্রুটি: " + e.message, 'error'));
+    };
+
+    window.handleRegister = () => {
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const phone = document.getElementById('reg-phone').value.trim();
+        const pass = document.getElementById('reg-pass').value;
+
+        if(!name || !email || !phone || !pass) return showToast("সব তথ্য দিন!", 'error');
+        const phoneRegex = /^01[3-9]\d{8}$/;
+        if(!phoneRegex.test(phone)) return showToast("সঠিক মোবাইল নম্বর দিন (১১ ডিজিট, 01 দিয়ে শুরু)", 'error');
+
+        const btn = document.getElementById('btn-reg-action');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> অপেক্ষা করুন...'; btn.disabled = true;
+
+        createUserWithEmailAndPassword(auth, email, pass).then((cred) => {
+            set(ref(db, 'users/' + cred.user.uid), {
+                name, email, phone, role: 'user', uid: cred.user.uid, joinDate: new Date().toLocaleDateString(), isVerified: false
+            });
+        }).catch((e) => {
+            showToast(e.message, 'error');
+            btn.innerText = "রেজিস্ট্রেশন সম্পন্ন করুন"; btn.disabled = false;
+        });
+    };
+
+    window.handleLogin = () => {
+        const email = document.getElementById('login-email').value.trim();
+        const pass = document.getElementById('login-pass').value;
+        const btn = document.getElementById('btn-login-action');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> যাচাই হচ্ছে...'; btn.disabled = true;
+        signInWithEmailAndPassword(auth, email, pass).catch((e) => {
+            showToast("ভুল ইমেইল বা পাসওয়ার্ড", 'error');
+            btn.innerText = "লগইন"; btn.disabled = false;
+        });
+    };
+
+    window.handleForgotPass = () => {
+        const email = document.getElementById('forgot-email').value.trim();
+        if(!email) return showToast("আপনার ইমেইল দিন", 'error');
+        const btn = document.getElementById('btn-forgot-action');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> পাঠানো হচ্ছে...'; btn.disabled = true;
+        sendPasswordResetEmail(auth, email).then(() => {
+            showToast("আপনার ইমেইলে লিংক পাঠানো হয়েছে!");
+            btn.innerText = "লিংক পাঠান"; btn.disabled = false;
+            toggleAuth('login');
+        }).catch((error) => {
+            showToast("ত্রুটি: " + error.message, 'error');
+            btn.innerText = "লিংক পাঠান"; btn.disabled = false;
+        });
+    };
+
+    window.handleLogout = () => { if(confirm("লগআউট করবেন?")) signOut(auth); };
+
+    window.submitPost = async () => {
+        const text = document.getElementById('post-text').value.trim();
+        const fileInput = document.getElementById('post-image-file');
+        const file = fileInput.files[0];
+
+        if(!text && !file) return showToast("কিছু লিখুন অথবা ছবি দিন!", 'error');
+        
+        const btn = document.getElementById('btn-post-submit');
+        const originalBtnText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> আপলোড হচ্ছে...';
+        btn.disabled = true;
+
+        let imgUrl = "";
+
+        try {
+            if (file) {
+                const storageRef = sRef(storage, 'posts/' + Date.now() + '_' + file.name);
+                await uploadBytes(storageRef, file);
+                imgUrl = await getDownloadURL(storageRef);
+            }
+
+            const name = userDetails.name || "Unknown";
+            const snap = await push(ref(db, 'posts'), { 
+                uid: currentUser.uid, 
+                author: name, 
+                content: text, 
+                image: imgUrl, 
+                type: 'text', 
+                timestamp: Date.now(), 
+                likes: {}, 
+                comments: {}, 
+                repostCount: 0,
+                authorVerified: !!(userDetails.isVerified || ['chairman','member','admin','doctor'].includes(userDetails.role)) 
+            });
+
+            document.getElementById('post-text').value = ""; 
+            fileInput.value = "";
+            togglePostModal(false); 
+            showToast("পোস্ট করা হয়েছে!");
+            notifyFriends(snap.key, name);
+
+        } catch (error) {
+            console.error(error);
+            showToast("পোস্ট করতে সমস্যা হয়েছে: " + error.message, 'error');
+        } finally {
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+        }
+    };
+
+    window.submitPoll = () => {
+        const q = document.getElementById('poll-question').value.trim();
+        const o1 = document.getElementById('poll-opt-1').value.trim();
+        const o2 = document.getElementById('poll-opt-2').value.trim();
+        
+        if(!q || !o1 || !o2) return showToast("প্রশ্ন এবং অন্তত দুটি অপশন দিন", 'error');
+        
+        const o3 = document.getElementById('poll-opt-3').value.trim();
+        const o4 = document.getElementById('poll-opt-4').value.trim();
+
+        const options = [{text: o1, votes: 0}, {text: o2, votes: 0}];
+        if(o3) options.push({text: o3, votes: 0});
+        if(o4) options.push({text: o4, votes: 0});
+        
+        push(ref(db, 'posts'), { 
+            uid: currentUser.uid, author: userDetails.name, content: q, type: 'poll', 
+            options: options, timestamp: Date.now(), likes: {}, comments: {}, repostCount: 0,
+            authorVerified: !!(userDetails.isVerified || ['chairman','member','admin','doctor'].includes(userDetails.role))
+        }).then((snap) => {
+            document.getElementById('poll-question').value = ""; 
+            document.getElementById('poll-opt-1').value = ""; document.getElementById('poll-opt-2').value = "";
+            togglePollModal(false); showToast("পোল তৈরি হয়েছে!");
+            notifyFriends(snap.key, userDetails.name);
+        });
+    };
+    
+    function notifyFriends(postId, name) {
+        get(ref(db, `users/${currentUser.uid}/friends`)).then((snapshot) => {
+            if(snapshot.exists()) {
+                snapshot.forEach((friendSnap) => {
+                    push(ref(db, `notifications/${friendSnap.key}`), {
+                        type: 'new_post', fromUid: currentUser.uid, fromName: name, postId: postId, timestamp: Date.now(), read: false
+                    });
+                });
+            }
+        });
+    }
+
+    window.votePoll = (postId, optionIdx) => {
+        const voteRef = ref(db, `posts/${postId}/voters/${currentUser.uid}`);
+        get(voteRef).then(snap => {
+            if(snap.exists()) return showToast("আপনি ইতিমধ্যে ভোট দিয়েছেন", 'error');
+            const optRef = ref(db, `posts/${postId}/options/${optionIdx}/votes`);
+            runTransaction(optRef, (votes) => (votes || 0) + 1).then(() => {
+                set(voteRef, optionIdx);
+                showToast("ভোট দেওয়া হয়েছে!");
+            });
+        });
+    };
+
+    window.toggleLike = (postId) => {
+        const likeRef = ref(db, `posts/${postId}/likes/${currentUser.uid}`);
+        get(likeRef).then((snap) => {
+            if (snap.exists()) set(likeRef, null); else set(likeRef, true);
+        });
+    };
+    
+    window.repost = (postId, text) => { 
+        const postRef = ref(db, `posts/${postId}/repostCount`);
+        runTransaction(postRef, (c) => (c || 0) + 1);
+        togglePostModal(true); 
+        document.getElementById('post-text').value = `[রিপোস্ট] ${text}\n\n`; 
+    };
+
+    window.openFullCommentModal = (postId) => {
+        currentFullPostId = postId;
+        document.getElementById('comment-full-modal').classList.remove('hidden-custom');
+        setTimeout(() => document.getElementById('comment-full-modal').classList.add('open'), 10);
+        history.pushState({ page: 'comment-modal', postId }, "", "#comments");
+        loadFullComments(postId);
+    };
+
+    window.closeFullCommentModal = () => {
+        document.getElementById('comment-full-modal').classList.remove('open');
+        setTimeout(() => {
+            document.getElementById('comment-full-modal').classList.add('hidden-custom');
+            currentFullPostId = null;
+        }, 300);
+    };
+
+    window.submitFullComment = () => {
+        const input = document.getElementById('full-comment-input');
+        const text = input.value.trim();
+        if(!text || !currentFullPostId) return;
+        push(ref(db, `posts/${currentFullPostId}/comments`), {
+            author: userDetails.name, authorUid: currentUser.uid, text: text, time: Date.now()
+        }).then(() => { input.value = ""; });
+    };
+
+    function loadFullComments(postId) {
+        const container = document.getElementById('full-comments-list');
+        const countSpan = document.getElementById('full-comment-count');
+        container.innerHTML = '<div class="flex justify-center p-4"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div></div>';
+        onValue(ref(db, `posts/${postId}/comments`), (snap) => {
+            if(currentFullPostId !== postId) return;
+            const comments = snap.val();
+            if(comments) {
+                const arr = Object.entries(comments).sort((a,b)=>a[1].time - b[1].time);
+                countSpan.innerText = arr.length;
+                let html = '';
+                arr.forEach(([cId, c]) => {
+                    const isMyComment = c.authorUid === currentUser.uid;
+                    const delBtn = isMyComment ? `<button onclick="deleteComment('${postId}','${cId}')" class="text-xs text-red-400 ml-2">ডিলিট</button>` : '';
+                    html += `<div class="flex gap-3 mb-4"><div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600 text-xs shrink-0">${escapeHTML(c.author).charAt(0)}</div><div class="bg-gray-100 rounded-2xl px-4 py-2 relative group max-w-[85%]"><h4 class="font-bold text-xs text-gray-800">${escapeHTML(c.author)}</h4><p class="text-sm text-gray-700">${escapeHTML(c.text)}</p><div class="absolute -bottom-4 right-2 text-[10px] text-gray-400 flex gap-2"><span>${timeAgo(c.time)}</span>${delBtn}</div></div></div>`;
+                });
+                container.innerHTML = html; container.scrollTop = container.scrollHeight;
+            } else { container.innerHTML = '<p class="text-center text-gray-400 mt-10">কোনো কমেন্ট নেই</p>'; countSpan.innerText = '0'; }
+        });
+    }
+
+    window.submitInlineComment = (postId) => {
+        const input = document.getElementById(`inline-comment-input-${postId}`);
+        const text = input.value.trim();
+        if(!text) return;
+        push(ref(db, `posts/${postId}/comments`), {
+            author: userDetails.name, authorUid: currentUser.uid, text: text, time: Date.now()
+        }).then(() => { input.value = ""; });
+    }
+
+    window.deleteComment = (postId, commentId) => { if(confirm("কমেন্ট ডিলিট করবেন?")) remove(ref(db, `posts/${postId}/comments/${commentId}`)); }
+    window.togglePostMenu = (postId) => {
+        const menu = document.getElementById(`post-menu-${postId}`);
+        const isHidden = menu.classList.contains('hidden');
+        document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden'));
+        if(isHidden) menu.classList.remove('hidden');
+    };
+    window.hidePost = (postId) => { document.getElementById(`post-card-${postId}`).style.display = 'none'; };
+    
+    window.deletePost = (postId) => { 
+        if(confirm("পোস্ট ডিলিট করবেন?")) {
+            remove(ref(db, `posts/${postId}`)).then(()=>showToast("মুছে ফেলা হয়েছে")); 
+        }
+    };
+
+    // === NEW: Optimized Post Rendering to prevent Flickering (Jumping) ===
+    function createPostHTML(post, id) {
+        const initial = post.author ? escapeHTML(post.author).charAt(0).toUpperCase() : 'U';
+        const isLiked = post.likes && post.likes[currentUser.uid];
+        const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+        const repostCount = post.repostCount || 0;
+        const comments = post.comments ? Object.entries(post.comments) : [];
+        const commentCount = comments.length;
+        const badge = post.authorVerified ? `<i class="fa-solid fa-circle-check verified-badge" title="Verified"></i>` : "";
+        
+        // Preview last 2 comments
+        let previewHTML = '';
+        comments.slice(-2).forEach(([cId, c]) => {
+             previewHTML += `<div class="bg-gray-50 px-3 py-1.5 rounded-lg mt-1 text-xs border border-gray-100 truncate"><span class="font-bold text-gray-800 mr-1">${escapeHTML(c.author)}</span>${escapeHTML(c.text)}</div>`;
+        });
+        const showMoreBtn = commentCount > 0 ? `<button onclick="openFullCommentModal('${id}')" class="text-xs text-green-600 font-bold mt-2 hover:underline w-full text-left">সকল কমেন্ট দেখুন (${commentCount})</button>` : '';
+        const deleteOption = post.uid === currentUser.uid ? `<li onclick="deletePost('${id}')" class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-600"><i class="fa-solid fa-trash w-5"></i> ডিলিট করুন</li>` : '';
+
+        let contentHTML = '';
+        if(post.content) {
+            contentHTML = `<p class="text-[15px] text-gray-800 mb-3 whitespace-pre-line leading-relaxed font-medium">${escapeHTML(post.content)}</p>`;
+        }
+        
+        let imageHTML = '';
+        if(post.image && post.image.trim() !== '') {
+            imageHTML = `
+            <div class="mb-3 w-full bg-gray-200 rounded-lg overflow-hidden border border-gray-200 relative min-h-[200px]">
+                <img src="${post.image}" class="w-full h-full object-cover">
+            </div>`;
+        }
+        
+        if(post.type === 'poll' && post.options) {
+            let pollHTML = '<div class="space-y-2 mb-3">';
+            let totalVotes = 0;
+            post.options.forEach(o => totalVotes += (o.votes || 0));
+            
+            post.options.forEach((opt, idx) => {
+                const percent = totalVotes === 0 ? 0 : Math.round((opt.votes || 0) / totalVotes * 100);
+                pollHTML += `
+                <div onclick="votePoll('${id}', ${idx})" class="poll-option relative w-full border rounded-lg h-10 overflow-hidden cursor-pointer hover:bg-gray-50">
+                    <div class="poll-fill absolute top-0 left-0 h-full bg-blue-100 z-0" style="width: ${percent}%"></div>
+                    <div class="absolute inset-0 flex justify-between items-center px-3 z-10 pointer-events-none">
+                        <span class="text-sm font-semibold text-gray-700">${escapeHTML(opt.text)}</span>
+                        <span class="text-xs font-bold text-gray-500">${percent}%</span>
+                    </div>
+                </div>`;
+            });
+            pollHTML += `<p class="text-xs text-right text-gray-400 mt-1">${totalVotes} ভোট</p></div>`;
+            contentHTML = `<h4 class="font-bold text-gray-800 mb-2">${escapeHTML(post.content)}</h4>${pollHTML}`;
+        }
+
+        // Added IDs for Dynamic Updates
+        return `
+        <div id="post-card-${id}" class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 relative max-w-lg mx-auto">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <div onclick="openUserProfile('${post.uid}')" class="cursor-pointer w-10 h-10 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-700 shadow-sm text-lg">${initial}</div>
+                    <div><h4 onclick="openUserProfile('${post.uid}')" class="font-bold text-sm text-gray-800 cursor-pointer hover:underline">${escapeHTML(post.author)}${badge}</h4><p class="text-[10px] text-gray-400">${timeAgo(post.timestamp)}</p></div>
+                </div>
+                <div class="relative">
+                    <button onclick="togglePostMenu('${id}')" class="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    <div id="post-menu-${id}" class="post-menu-dropdown hidden absolute right-0 top-8 w-48 bg-white shadow-xl rounded-lg z-20 border border-gray-100 py-1 text-sm text-gray-700">
+                        <ul>
+                            <li onclick="hidePost('${id}')" class="px-4 py-2 hover:bg-gray-100 cursor-pointer"><i class="fa-regular fa-eye-slash w-5"></i> পোস্ট হাইড করুন</li>
+                            ${deleteOption}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            ${contentHTML}
+            ${imageHTML}
+            <div class="grid grid-cols-3 border-t border-b border-gray-100 py-2 mt-2">
+                <button onclick="toggleLike('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1 rounded transition text-gray-500">
+                    <i id="like-icon-${id}" class="fa-solid fa-heart" style="${isLiked ? 'color: red' : ''}"></i> 
+                    <span id="like-cnt-${id}" class="text-xs ${isLiked ? 'font-bold text-red-500' : ''}">${likeCount}</span>
+                </button>
+                <button onclick="openFullCommentModal('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1 rounded transition text-gray-500">
+                    <i class="fa-regular fa-comment"></i> <span id="comment-cnt-${id}" class="text-xs">${commentCount}</span>
+                </button>
+                <button onclick="repost('${id}', '${post.type==='text'? escapeHTML(post.content).replace(/'/g, "\\'") : 'Shared a Poll'}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1 rounded transition text-gray-500">
+                    <i class="fa-solid fa-share"></i> <span class="text-xs">${repostCount}</span>
+                </button>
+            </div>
+            <div class="mt-2">
+                <div id="comments-preview-${id}">${previewHTML}</div>
+                ${showMoreBtn}
+                <div class="mt-3 flex gap-2">
+                    <input type="text" id="inline-comment-input-${id}" placeholder="আপনার মতামত..." class="flex-1 bg-gray-100 border-0 rounded-full px-3 py-2 text-xs focus:ring-1 focus:ring-green-500">
+                    <button onclick="submitInlineComment('${id}')" class="text-green-600 w-8 h-8 flex items-center justify-center bg-green-50 rounded-full hover:bg-green-100"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // UPDATED FEED LISTENER (Fixes Flickering)
+    onValue(query(ref(db, 'posts'), limitToLast(50)), (snapshot) => {
+        const data = snapshot.val();
+        postsDataGlobal = data; 
+        const feedDiv = document.getElementById('news-feed');
+        
+        if (!data) {
+            feedDiv.innerHTML = '<p class="text-center p-4 text-gray-400">কোনো পোস্ট নেই</p>';
+            return;
+        }
+
+        // Sort new data desc
+        const sortedPosts = Object.entries(data).sort((a,b)=>b[1].timestamp - a[1].timestamp);
+
+        // Update My Posts (Simpler to just re-render profile posts)
+        const myPostDiv = document.getElementById('my-posts-feed');
+        if(myPostDiv) {
+             let myHtml = '';
+             sortedPosts.forEach(([id, post]) => { if(post.uid === currentUser.uid) myHtml += createPostHTML(post, id); });
+             myPostDiv.innerHTML = myHtml || '<p class="text-center text-gray-400 text-xs py-4">পোস্ট নেই</p>';
+        }
+
+        // Update Main Feed (Smart Diff)
+        if(feedDiv.children.length === 0 || feedDiv.innerHTML.includes('skeleton')) {
+             // Initial Load
+             let allHtml = '';
+             sortedPosts.forEach(([id, post]) => allHtml += createPostHTML(post, id));
+             feedDiv.innerHTML = allHtml;
+        } else {
+             // Subsequent Updates
+             sortedPosts.forEach(([id, post]) => {
+                 const existingCard = document.getElementById(`post-card-${id}`);
+                 if(existingCard) {
+                     // Update existing card (Likes, Comments) without resetting scroll
+                     const isLiked = post.likes && post.likes[currentUser.uid];
+                     const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+                     const commentCount = post.comments ? Object.keys(post.comments).length : 0;
+                     
+                     // Update Likes
+                     const likeIcon = document.getElementById(`like-icon-${id}`);
+                     const likeCnt = document.getElementById(`like-cnt-${id}`);
+                     if(likeIcon) likeIcon.style.color = isLiked ? 'red' : '';
+                     if(likeCnt) {
+                         likeCnt.innerText = likeCount;
+                         if(isLiked) likeCnt.classList.add('font-bold','text-red-500'); else likeCnt.classList.remove('font-bold','text-red-500');
+                     }
+                     // Update Comment Count
+                     const cmntCnt = document.getElementById(`comment-cnt-${id}`);
+                     if(cmntCnt) cmntCnt.innerText = commentCount;
+                     
+                     // Update Polls if applicable
+                     if(post.type === 'poll') {
+                         // Full redraw of poll part might be needed if votes change drastically, 
+                         // but for simplicity, allow basic HTML redraw if complex content changes
+                         // For now, simpler implementation: do nothing for text posts content, just counts
+                     }
+                 } else {
+                     // New Post: Insert at the beginning (after the container start)
+                     // Since we sorted desc, if it's new, it likely belongs at top.
+                     // However, limitToLast returns old->new, so logic needs care.
+                     // With sortedPosts (newest first), if ID not found, prepend.
+                     // BUT: doing `feedDiv.innerHTML = new + feedDiv.innerHTML` resets scroll.
+                     // Use insertAdjacentHTML
+                     const newHtml = createPostHTML(post, id);
+                     // Check if it's actually newer than the first child? 
+                     // Simplest for "news feed": Just prepend new stuff.
+                     // NOTE: This might still shift content down, but won't "flicker".
+                     // Ideally we check timestamps. 
+                     // For this fix: If not found, insert after a check.
+                     // To avoid dupes from sorting logic, just ensure ID check is robust.
+                     // But wait, if limitToLast changes the set (oldest drops off), we should remove it.
+                     // Skipping removal logic for simplicity, focusing on update/add.
+                     
+                     // Only add if timestamp > current top post?
+                     // Let's just create element and prepend.
+                     const tempDiv = document.createElement('div');
+                     tempDiv.innerHTML = newHtml;
+                     const newEl = tempDiv.firstElementChild;
+                     // Find insertion point based on timestamp? 
+                     // For simplicity in this vanilla JS: Prepend.
+                     feedDiv.prepend(newEl);
+                 }
+             });
+        }
+    });
+
+    // ==========================================
+    // মানুষ ও ফ্রেন্ডস লজিক (Updated)
+    // ==========================================
+    function updatePeopleTab() {
+        const reqDiv = document.getElementById('friend-requests-list');
+        const reqSec = document.getElementById('friend-requests-section');
+        get(ref(db, `friend_requests/${currentUser.uid}`)).then(snap => {
+            if(snap.exists()) {
+                reqSec.classList.remove('hidden');
+                let html = '';
+                Object.values(snap.val()).forEach(r => {
+                    html += `<div class="bg-white p-3 rounded-xl shadow-sm border border-yellow-100 flex justify-between items-center"><div class="flex items-center gap-3" onclick="openUserProfile('${r.fromUid}')"><div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold"><i class="fa-solid fa-user-plus"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${escapeHTML(r.fromName)}</h4></div></div><div class="flex gap-2"><button onclick="acceptRequest('${r.fromUid}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs">Confirm</button><button onclick="cancelRequest('${r.fromUid}')" class="bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs">Delete</button></div></div>`;
+                });
+                reqDiv.innerHTML = html;
+            } else reqSec.classList.add('hidden');
+        });
+
+        const frPreviewDiv = document.getElementById('my-friends-preview-list');
+        const friendUids = myFriends;
+        if(friendUids.length > 0) {
+            let html = '';
+            const friendsList = allUsers.filter(u => friendUids.includes(u.uid)).slice(0, 10);
+            if(friendsList.length === 0 && friendUids.length > 0) {
+                 html = '<p class="col-span-2 text-center text-gray-400 text-xs py-2">বন্ধুদের তালিকা দেখুন...</p>';
+            } else {
+                friendsList.forEach(u => {
+                    html += `<div onclick="openUserProfile('${u.uid}')" class="bg-green-50 p-2 rounded-lg border border-green-100 flex items-center gap-2 cursor-pointer"><div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-green-600 font-bold text-xs">${escapeHTML(u.name).charAt(0)}</div><span class="text-xs font-bold text-gray-700 truncate">${escapeHTML(u.name).split(' ')[0]}</span></div>`;
+                });
+            }
+            frPreviewDiv.innerHTML = html;
+        } else {
+            frPreviewDiv.innerHTML = '<p class="col-span-2 text-center text-gray-400 text-xs">আপনার কোনো বন্ধু নেই</p>';
+        }
+    }
+
+    window.filterUsers = () => {
+        const queryVal = document.getElementById('search-people').value.trim().toLowerCase();
+        const div = document.getElementById('users-list');
+        div.innerHTML = '<p class="text-center text-gray-400 mt-4">খুজছে...</p>';
+
+        if(!queryVal) {
+             renderSuggestions(allUsers);
+             return;
+        }
+
+        get(ref(db, 'users')).then((snap) => {
+            if(snap.exists()) {
+                const all = Object.values(snap.val());
+                const results = all.filter(u => 
+                    u.uid !== currentUser.uid && 
+                    u.name && u.name.toLowerCase().includes(queryVal)
+                );
+                
+                if(results.length > 0) {
+                    renderSuggestions(results);
+                } else {
+                    div.innerHTML = '<p class="text-center text-gray-400 mt-4">কাউকে পাওয়া যায়নি</p>';
+                }
+            } else {
+                div.innerHTML = '<p class="text-center text-gray-400 mt-4">কাউকে পাওয়া যায়নি</p>';
+            }
+        });
+    };
+
+    function renderSuggestions(users) {
+        const div = document.getElementById('users-list');
+        const strangers = users.filter(u => !myFriends.includes(u.uid) && u.uid !== currentUser.uid);
+        
+        if(strangers.length === 0) { div.innerHTML = '<p class="text-center text-gray-400 mt-4">কাউকে পাওয়া যায়নি</p>'; return; }
+        
+        let html = '';
+        strangers.slice(0, 50).forEach(u => { 
+            const badge = checkUserBadge(u);
+            html += `
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-3" onclick="openUserProfile('${u.uid}')">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">${u.name?escapeHTML(u.name).charAt(0):'U'}</div>
+                    <div><h4 class="font-bold text-gray-800 text-sm">${escapeHTML(u.name)}${badge}</h4><p class="text-xs text-gray-500">${escapeHTML(u.profession) || 'সদস্য'}</p></div>
+                </div>
+                <button id="btn-req-${u.uid}" onclick="toggleFriendRequest('${u.uid}')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-blue-100 transition min-w-[80px]">
+                     Add
+                </button>
+            </div>`;
+            checkRequestStatus(u.uid);
+        });
+        div.innerHTML = html;
+    }
+
+    window.toggleFriendRequest = (toUid) => {
+        const btn = document.getElementById(`btn-req-${toUid}`);
+        const isCancelMode = btn.innerText.includes('Cancel');
+        btn.disabled = true;
+        btn.innerText = "...";
+
+        if (isCancelMode) {
+            remove(ref(db, `friend_requests/${toUid}/${currentUser.uid}`))
+            .then(() => {
+                showToast("রিকুয়েস্ট বাতিল করা হয়েছে");
+                btn.classList.remove('bg-gray-200', 'text-gray-600');
+                btn.classList.add('bg-blue-50', 'text-blue-600');
+                btn.innerHTML = 'Add';
+                btn.disabled = false;
+            }).catch(e => {
+                showToast("ত্রুটি: " + e.message, 'error');
+                btn.disabled = false;
+            });
+        } else {
+            set(ref(db, `friend_requests/${toUid}/${currentUser.uid}`), { 
+                fromName: userDetails.name, 
+                fromUid: currentUser.uid, 
+                timestamp: Date.now() 
+            })
+            .then(() => { 
+                showToast("রিকুয়েস্ট পাঠানো হয়েছে!"); 
+                btn.classList.remove('bg-blue-50', 'text-blue-600');
+                btn.classList.add('bg-gray-200', 'text-gray-600');
+                btn.innerHTML = 'Cancel';
+                btn.disabled = false;
+            }).catch(e => {
+                showToast("ত্রুটি: " + e.message, 'error');
+                btn.disabled = false;
+            });
+        }
+    };
+
+    window.checkRequestStatus = (targetUid) => {
+        get(ref(db, `friend_requests/${targetUid}/${currentUser.uid}`)).then((snapshot) => {
+            const btn = document.getElementById(`btn-req-${targetUid}`);
+            if (!btn) return; 
+
+            if (snapshot.exists()) {
+                btn.classList.remove('bg-blue-50', 'text-blue-600');
+                btn.classList.add('bg-gray-200', 'text-gray-600');
+                btn.innerHTML = 'Cancel';
+            } else {
+                btn.innerHTML = 'Add';
+            }
+        });
+    }
+
+    window.unfriend = (uid) => {
+        if(confirm("আপনি কি আনফ্রেন্ড করতে চান?")) {
+            const updates = {};
+            updates[`users/${currentUser.uid}/friends/${uid}`] = null;
+            updates[`users/${uid}/friends/${currentUser.uid}`] = null;
+            update(ref(db), updates).then(() => {
+                showToast("আনফ্রেন্ড করা হয়েছে");
+                if(currentChatUser && currentChatUser.uid === uid) closeChat();
+                get(ref(db, `users/${currentUser.uid}/friends`)).then((snap) => {
+                     myFriends = snap.exists() ? Object.keys(snap.val()) : [];
+                     updatePeopleTab();
+                });
+            });
+        }
+    };
+
+    function loadQuickChatFriends() {
+        const div = document.getElementById('quick-chat-friends');
+        const friendUids = myFriends;
+        if(friendUids.length === 0) { div.innerHTML = '<span class="text-xs text-gray-400">কোনো বন্ধু নেই</span>'; return; }
+        
+        let tempHtml = '';
+        const friendsToLoad = friendUids.slice(0, 15);
+        let loaded = 0;
+        
+        friendsToLoad.forEach(uid => {
+            get(ref(db, `users/${uid}`)).then(uSnap => {
+                const u = uSnap.val();
+                if(u) {
+                    tempHtml += `
+                    <div onclick="startChat('${u.uid}', '${escapeHTML(u.name)}')" class="flex flex-col items-center cursor-pointer min-w-[50px]">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-lg relative">
+                            ${escapeHTML(u.name).charAt(0)}
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                        </div>
+                        <span class="text-[10px] text-gray-600 mt-1 truncate w-14 text-center">${escapeHTML(u.name).split(' ')[0]}</span>
+                    </div>`;
+                }
+                loaded++;
+                if(loaded === friendsToLoad.length) div.innerHTML = tempHtml;
+            });
+        });
+    }
+
+    window.openDirectoryCategory = (category, title) => {
+        switchPage('directory-list');
+        document.getElementById('directory-list-title').innerText = title;
+        const container = document.getElementById('directory-items-container');
+        container.innerHTML = '<div class="flex justify-center p-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
+        onValue(ref(db, `directory/${category}`), (snap) => {
+            const data = snap.val();
+            if(data) {
+                let html = '';
+                Object.values(data).forEach(item => {
+                    html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-50 rounded-full text-blue-600 flex items-center justify-center text-xl"><i class="fa-solid fa-user-tie"></i></div><div><h4 class="font-bold text-gray-800">${escapeHTML(item.name)}</h4><p class="text-xs text-gray-500">${escapeHTML(item.details) || title}</p><p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.address) || 'ঠিকানা নেই'}</p></div></div><div class="flex gap-2"><a href="tel:${item.phone}" class="bg-green-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-green-600"><i class="fa-solid fa-phone"></i></a></div></div>`;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<div class="text-center py-10"><i class="fa-regular fa-folder-open text-4xl text-gray-300 mb-3"></i><p class="text-gray-400">এই বিভাগে কোনো তথ্য পাওয়া যায়নি</p></div>`;
+            }
+        });
+    }
+
+    window.openUserProfile = (uid) => {
+        if(uid === currentUser.uid) { switchPage('profile'); return; }
+        switchPage('view-profile');
+        
+        history.pushState({ page: 'view-profile', uid }, "", "#profile-view");
+
+        document.getElementById('view-profile-name').innerText = "লোড হচ্ছে...";
+        document.getElementById('view-profile-initial').innerText = "...";
+        document.getElementById('view-profile-posts-feed').innerHTML = '<div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
+        document.getElementById('view-profile-actions').innerHTML = ''; 
+        document.getElementById('view-profile-phone').innerHTML = '---'; // Reset phone
+        document.getElementById('btn-view-friends-other').setAttribute('onclick', `showAllFriends('${uid}')`);
+
+        get(ref(db, 'users/' + uid)).then(snap => {
+            const user = snap.val();
+            if(user) {
+                const badge = checkUserBadge(user);
+                document.getElementById('view-profile-initial').innerText = user.name ? escapeHTML(user.name).charAt(0) : 'U';
+                document.getElementById('view-profile-name').innerHTML = (escapeHTML(user.name) || "অজ্ঞাত") + badge;
+                document.getElementById('view-profile-profession').innerText = escapeHTML(user.profession) || "পেশা উল্লেখ নেই";
+                document.getElementById('view-profile-location').innerText = escapeHTML(user.location) || "ঠিকানা উল্লেখ নেই";
+                document.getElementById('view-profile-bio').innerText = escapeHTML(user.bio) || "কোনো তথ্য নেই";
+                
+                if(user.privacy_hide_contact) {
+                    document.getElementById('view-profile-phone').innerText = "গোপনীয়";
+                } else {
+                    document.getElementById('view-profile-phone').innerText = user.phone || "ফোন নেই";
+                }
+
+                checkFriendshipStatus(uid, user.name);
+                renderUserPosts(uid);
+                loadFriendsPreview(uid, 'other');
+            } else { showToast("ইউজার পাওয়া যায়নি!", 'error'); switchPage('home'); }
+        });
+    };
+
+    window.loadFriendsPreview = (uid, mode) => {
+        const container = document.getElementById(mode === 'me' ? 'profile-friends-preview-me' : 'profile-friends-preview-other');
+        const countSpan = document.getElementById(mode === 'me' ? 'friends-count-me' : 'friends-count-other');
+        container.innerHTML = '<p class="col-span-3 text-center text-xs text-gray-400">লোড হচ্ছে...</p>';
+        get(ref(db, `users/${uid}/friends`)).then(snap => {
+            if(snap.exists()) {
+                const friends = Object.keys(snap.val());
+                countSpan.innerText = `${friends.length} জন বন্ধু`;
+                let html = ''; let loadedCount = 0;
+                if(friends.length === 0) { container.innerHTML = '<p class="col-span-3 text-center text-xs text-gray-400 py-2">এখনো ফ্রেন্ড নেই</p>'; return; }
+                friends.slice(0, 6).forEach(friendUid => {
+                    get(ref(db, `users/${friendUid}`)).then(uSnap => {
+                        const uData = uSnap.val();
+                        if(uData){
+                             html += `<div onclick="openUserProfile('${friendUid}')" class="flex flex-col items-center cursor-pointer"><div class="w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 font-bold mb-1 border border-gray-200 overflow-hidden shadow-sm"><span class="text-2xl">${escapeHTML(uData.name).charAt(0)}</span></div><p class="text-[11px] font-semibold text-gray-800 truncate w-full leading-tight mt-0.5">${escapeHTML(uData.name).split(' ')[0]}</p></div>`;
+                        }
+                        loadedCount++;
+                        if(loadedCount === Math.min(friends.length, 6)) container.innerHTML = html;
+                    });
+                });
+            } else { container.innerHTML = '<p class="col-span-3 text-center text-xs text-gray-400 py-2">এখনো ফ্রেন্ড নেই</p>'; countSpan.innerText = `0 জন বন্ধু`; }
+        });
+    };
+
+    window.showAllFriends = (uid) => {
+        const targetUid = uid === 'me' ? currentUser.uid : uid;
+        switchPage('friends-list');
+        const container = document.getElementById('all-friends-container');
+        container.innerHTML = '<div class="flex justify-center pt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>';
+        get(ref(db, `users/${targetUid}/friends`)).then(snap => {
+             if(snap.exists()) {
+                const friends = Object.keys(snap.val());
+                let html = ''; let count = 0;
+                friends.forEach(fUid => {
+                    get(ref(db, `users/${fUid}`)).then(uSnap => {
+                        const u = uSnap.val();
+                        if(u) {
+                             html += `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer" onclick="openUserProfile('${fUid}')"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold">${u.name?escapeHTML(u.name).charAt(0):'U'}</div><div><h4 class="font-bold text-gray-800 text-sm">${escapeHTML(u.name)}</h4><p class="text-xs text-gray-500">${escapeHTML(u.profession) || 'সদস্য'}</p></div></div></div>`;
+                        }
+                        count++;
+                        if(count === friends.length) container.innerHTML = html;
+                    });
+                });
+             } else container.innerHTML = '<p class="text-center text-gray-400 mt-10">কোনো ফ্রেন্ড নেই</p>';
+        });
+    };
+
+    function checkFriendshipStatus(targetUid, targetName) {
+        const actionDiv = document.getElementById('view-profile-actions');
+        actionDiv.innerHTML = '<button class="w-full bg-gray-200 py-2 rounded-lg text-sm font-bold">Checking...</button>';
+        
+        get(ref(db, `users/${currentUser.uid}/friends/${targetUid}`)).then(snap => {
+            if(snap.exists()) {
+                actionDiv.innerHTML = `<button onclick="startChat('${targetUid}', '${escapeHTML(targetName)}')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-700 flex items-center justify-center gap-2"><i class="fa-brands fa-facebook-messenger"></i> মেসেজ</button><button onclick="unfriend('${targetUid}')" class="w-12 bg-red-100 text-red-600 py-2 rounded-lg font-bold text-sm hover:bg-red-200 flex items-center justify-center"><i class="fa-solid fa-user-xmark"></i></button>`;
+            } else {
+                get(ref(db, `friend_requests/${targetUid}/${currentUser.uid}`)).then(reqSnap => {
+                    if(reqSnap.exists()) {
+                        actionDiv.innerHTML = `<button disabled class="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2">রিকুয়েস্ট পাঠানো হয়েছে</button>`;
+                    } else {
+                        get(ref(db, `friend_requests/${currentUser.uid}/${targetUid}`)).then(incomingSnap => {
+                            if(incomingSnap.exists()) {
+                                actionDiv.innerHTML = `<button onclick="acceptRequest('${targetUid}')" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold text-sm shadow hover:bg-green-700 flex items-center justify-center gap-2">Confirm</button><button onclick="cancelRequest('${targetUid}')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold text-sm hover:bg-gray-300 flex items-center justify-center gap-2">Delete</button>`;
+                            } else {
+                                actionDiv.innerHTML = `<button onclick="sendFriendRequest('${targetUid}')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-700 flex items-center justify-center gap-2"><i class="fa-solid fa-user-plus"></i> অ্যাড ফ্রেন্ড</button><button onclick="startChat('${targetUid}', '${escapeHTML(targetName)}')" class="flex-1 bg-gray-200 text-black py-2 rounded-lg font-bold text-sm hover:bg-gray-300 flex items-center justify-center gap-2"><i class="fa-brands fa-facebook-messenger"></i> মেসেজ</button>`;
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    function renderUserPosts(targetUid) {
+        const feedDiv = document.getElementById('view-profile-posts-feed');
+        if(postsDataGlobal) {
+            let html = '';
+            const postsArr = Object.entries(postsDataGlobal).sort((a,b)=>b[1].timestamp-a[1].timestamp);
+            const userPosts = postsArr.filter(([id, post]) => post.uid === targetUid);
+            if(userPosts.length > 0) { userPosts.forEach(([id, post]) => { html += createPostHTML(post, id); }); feedDiv.innerHTML = html; } 
+            else feedDiv.innerHTML = '<p class="text-center text-gray-400 py-10">কোনো পোস্ট নেই</p>';
+        } else feedDiv.innerHTML = '<p class="text-center text-gray-400 py-10">কোনো পোস্ট নেই</p>';
+    }
+
+    window.sendFriendRequest = (toUid) => {
+        set(ref(db, `friend_requests/${toUid}/${currentUser.uid}`), { fromName: userDetails.name, fromUid: currentUser.uid, timestamp: Date.now() })
+        .then(() => { showToast("রিকুয়েস্ট পাঠানো হয়েছে!"); document.getElementById('view-profile-actions').innerHTML = `<button disabled class="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2">রিকুয়েস্ট পাঠানো হয়েছে</button>`; });
+    };
+
+    function listenForFriendRequests(uid) { onValue(ref(db, `friend_requests/${uid}`), (snap) => { updatePeopleTab(); }); }
+
+    function listenForNotifications(uid) {
+        const list = document.getElementById('notifications-list');
+        onValue(ref(db, `notifications/${uid}`), (notifSnap) => {
+            const notifs = notifSnap.val() || {};
+            let html = ''; let unreadCount = 0;
+            Object.values(notifs).reverse().forEach(n => {
+                if(!n.read) unreadCount++;
+                if(n.type === 'new_post') {
+                    html += `<div class="bg-white p-3 rounded-xl shadow-sm border-l-4 border-blue-400 flex justify-between items-center mb-3 cursor-pointer" onclick="openFullCommentModal('${n.postId}')"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"><i class="fa-solid fa-rss"></i></div><div><h4 class="font-bold text-gray-800 text-sm">${escapeHTML(n.fromName)}</h4><p class="text-xs text-gray-500">একটি নতুন পোস্ট শেয়ার করেছেন</p><p class="text-[10px] text-gray-400">${timeAgo(n.timestamp)}</p></div></div></div>`;
+                }
+                // NEW: Blood Request Notification
+                if(n.type === 'blood_req') {
+                     html += `<div class="bg-red-50 p-3 rounded-xl shadow-sm border-l-4 border-red-600 flex justify-between items-center mb-3"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold"><i class="fa-solid fa-droplet"></i></div><div><h4 class="font-bold text-red-800 text-sm">জরুরি রক্ত প্রয়োজন! (${n.group})</h4><p class="text-xs text-gray-600">যোগাযোগ: ${n.contact}</p><p class="text-[10px] text-gray-400">${timeAgo(n.timestamp)}</p></div></div><a href="tel:${n.contact}" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white"><i class="fa-solid fa-phone"></i></a></div>`;
+                }
+            });
+            if(!html) html = '<p class="text-center text-gray-400 mt-10">কোনো নোটিফিকেশন নেই</p>';
+            list.innerHTML = html;
+            const badge = document.getElementById('nav-badge-notice');
+            const headBadge = document.getElementById('header-badge-notice');
+            if(unreadCount > 0) {
+                badge.innerText = unreadCount; badge.classList.add('active');
+                headBadge.innerText = unreadCount; headBadge.classList.add('active');
+            } else { badge.classList.remove('active'); headBadge.classList.remove('active'); }
+        });
+    }
+
+    window.acceptRequest = (fromUid) => {
+        const updates = {};
+        updates[`users/${currentUser.uid}/friends/${fromUid}`] = true;
+        updates[`users/${fromUid}/friends/${currentUser.uid}`] = true;
+        updates[`friend_requests/${currentUser.uid}/${fromUid}`] = null;
+        update(ref(db), updates).then(() => { 
+            showToast("রিকুয়েস্ট এক্সেপ্ট করা হয়েছে!"); 
+            get(ref(db, `users/${currentUser.uid}/friends`)).then((snap) => {
+                 myFriends = snap.exists() ? Object.keys(snap.val()) : [];
+                 updatePeopleTab();
+                 loadQuickChatFriends();
+            });
+            if(document.getElementById('page-view-profile').classList.contains('hidden') === false) {
+                 checkFriendshipStatus(fromUid, "User");
+            }
+        });
+    };
+
+    window.cancelRequest = (fromUid) => { 
+        remove(ref(db, `friend_requests/${currentUser.uid}/${fromUid}`)).then(() => {
+            showToast("রিকুয়েস্ট ডিলিট করা হয়েছে");
+             if(document.getElementById('page-view-profile').classList.contains('hidden') === false) {
+                 checkFriendshipStatus(fromUid, "User");
+            }
+        });
+    };
+
+    window.startChat = (uid, name) => {
+        currentChatUser = { uid, name };
+        switchPage('messages');
+        document.getElementById('chat-list-view').classList.add('hidden-custom');
+        document.getElementById('chat-conversation-view').classList.remove('hidden-custom');
+        document.getElementById('chat-header-name').innerText = escapeHTML(name);
+        document.getElementById('chat-header-img').innerText = escapeHTML(name).charAt(0);
+        
+        history.pushState({ page: 'chat-conversation', uid }, "", "#chat");
+        
+        loadMessages(uid);
+    };
+
+    window.closeChat = () => {
+        document.getElementById('chat-list-view').classList.remove('hidden-custom');
+        document.getElementById('chat-conversation-view').classList.add('hidden-custom');
+        currentChatUser = null;
+    };
+
+    function getChatId(uid1, uid2) { return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`; }
+
+    function loadChatList(uid) {
+        onValue(ref(db, `user_chats/${uid}`), (snap) => {
+            const list = snap.val();
+            const container = document.getElementById('chat-list-container');
+            if(list) {
+                let html = '';
+                Object.entries(list).sort((a,b)=>b[1].timestamp - a[1].timestamp).forEach(([peerUid, info]) => {
+                    if(!info || !info.name) return; 
+                    html += `<div onclick="startChat('${peerUid}', '${escapeHTML(info.name)}')" class="p-4 border-b bg-white hover:bg-gray-50 cursor-pointer flex items-center gap-3"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-700 text-xl">${escapeHTML(info.name).charAt(0)}</div><div class="flex-1"><div class="flex justify-between"><h4 class="font-bold text-gray-800">${escapeHTML(info.name)}</h4><span class="text-[10px] text-gray-400">${timeAgo(info.timestamp)}</span></div><p class="text-sm text-gray-500 truncate">${escapeHTML(info.lastMessage)}</p></div></div>`;
+                });
+                container.innerHTML = html;
+            } else container.innerHTML = '<p class="text-center text-gray-400 mt-10 text-sm">কোনো কনভারসেশন নেই</p>';
+        });
+    }
+
+    function loadMessages(otherUid) {
+        const chatId = getChatId(currentUser.uid, otherUid);
+        const div = document.getElementById('messages-container');
+        div.innerHTML = '<p class="text-center text-xs text-gray-400 mt-4">নতুন কথোপকথন শুরু হচ্ছে...</p>';
+        
+        const messagesQuery = query(ref(db, `chats/${chatId}`), limitToLast(50));
+        
+        onValue(messagesQuery, (snap) => {
+            const msgs = snap.val();
+            if(msgs) {
+                let html = '';
+                Object.values(msgs).forEach(m => {
+                    const isMe = m.sender === currentUser.uid;
+                    html += `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-2"><div class="px-4 py-2 max-w-[70%] text-sm ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'}">${escapeHTML(m.text)}</div></div>`;
+                });
+                div.innerHTML = html; 
+                requestAnimationFrame(() => {
+                    div.scrollTop = div.scrollHeight;
+                });
+            }
+        });
+    }
+
+    window.sendMsg = () => {
+        if(!currentChatUser) return;
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if(!text) return;
+        const chatId = getChatId(currentUser.uid, currentChatUser.uid);
+        const ts = Date.now();
+        push(ref(db, `chats/${chatId}`), { sender: currentUser.uid, text: text, timestamp: ts });
+        const myUpdate = { name: currentChatUser.name, lastMessage: "You: " + text, timestamp: ts };
+        const peerUpdate = { name: userDetails.name, lastMessage: text, timestamp: ts };
+        update(ref(db, `user_chats/${currentUser.uid}/${currentChatUser.uid}`), myUpdate);
+        update(ref(db, `user_chats/${currentChatUser.uid}/${currentUser.uid}`), peerUpdate);
+        input.value = "";
+    };
+
+    onValue(ref(db, 'notices'), (snapshot) => {
+        const data = snapshot.val();
+        if(data) {
+            const notice = Object.values(data).pop();
+            document.getElementById('live-notices').innerHTML = `<div class="bg-orange-50 p-4 m-3 rounded-xl border-l-4 border-orange-500 flex items-start gap-3 shadow-sm"><i class="fa-solid fa-bullhorn text-orange-600 mt-1"></i><div><h3 class="font-bold text-orange-900 text-sm">${escapeHTML(notice.title)}</h3><p class="text-xs text-orange-800 line-clamp-2 mt-1">${escapeHTML(notice.description)}</p></div></div>`;
+        }
+    });
+    
+    window.submitProduct = async () => {
+        const title = document.getElementById('sell-title').value.trim();
+        const price = document.getElementById('sell-price').value.trim();
+        const desc = document.getElementById('sell-desc').value.trim();
+        const file = document.getElementById('sell-image-file').files[0];
+
+        if(!title) return;
+        
+        const btn = document.getElementById('btn-sell-submit');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> আপলোড হচ্ছে...'; btn.disabled = true;
+
+        let imgUrl = "";
+        if (file) {
+            try {
+                const storageRef = sRef(storage, 'market/' + Date.now() + '_' + file.name);
+                await uploadBytes(storageRef, file);
+                imgUrl = await getDownloadURL(storageRef);
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        push(ref(db, 'market_items'), { uid: currentUser.uid, seller: userDetails.name, title, price, desc, image: imgUrl, time: Date.now() })
+        .then(() => { 
+            toggleSellModal(false); 
+            document.getElementById('sell-title').value = ""; 
+            showToast("পণ্য যুক্ত হয়েছে!"); 
+            btn.innerText = "বিজ্ঞাপন দিন"; btn.disabled = false;
+        });
+    };
+
+    onValue(ref(db, 'market_items'), (snap) => {
+        const div = document.getElementById('market-list'); const data = snap.val();
+        globalMarketItems = []; 
+        if(data) {
+            globalMarketItems = Object.values(data); 
+            let html = '';
+            globalMarketItems.reverse().forEach(item => {
+                const imgTag = item.image ? `<img src="${item.image}" class="h-full w-full object-cover">` : `<i class="fa-solid fa-image text-3xl"></i>`;
+                html += `<div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col justify-between"><div><div class="h-24 bg-gray-100 rounded-lg mb-2 flex items-center justify-center text-gray-300 overflow-hidden">${imgTag}</div><h3 class="font-bold text-sm text-gray-800 line-clamp-1">${escapeHTML(item.title)}</h3><p class="text-orange-600 font-bold text-sm">৳ ${escapeHTML(item.price)}</p><p class="text-[10px] text-gray-500 line-clamp-2 mt-1">${escapeHTML(item.desc)}</p></div><div class="mt-2 pt-2 border-t flex justify-between items-center"><span class="text-[10px] text-gray-400">${escapeHTML(item.seller).split(' ')[0]}</span><button class="bg-green-500 text-white px-2 py-1 rounded text-xs"><i class="fa-solid fa-phone"></i></button></div></div>`;
+            });
+            div.innerHTML = html;
+        } else div.innerHTML = '<p class="col-span-2 text-center text-gray-400 py-10">কোনো পণ্য নেই</p>';
+    });
+
+    window.submitDonor = () => {
+        const bloodGroup = document.getElementById('donor-blood-group').value;
+        const phone = document.getElementById('donor-phone').value;
+        const lastDate = document.getElementById('donor-last-date').value;
+        if(!bloodGroup || !phone) return showToast("সব তথ্য দিন!", 'error');
+        set(ref(db, 'donors/' + currentUser.uid), { name: userDetails.name, bloodGroup, phone, lastDate, uid: currentUser.uid })
+        .then(() => { showToast("আপনি ডোনার তালিকায় যুক্ত হয়েছেন!"); toggleDonorModal(false); });
+    };
+
+    // === NEW: Emergency Blood Request Function ===
+    window.sendEmergencyBloodRequest = () => {
+        const group = document.getElementById('req-blood-group').value;
+        const location = document.getElementById('req-location').value.trim();
+        const contact = document.getElementById('req-contact').value.trim();
+        
+        if(!group || !contact) return showToast("গ্রুপ এবং মোবাইল নম্বর আবশ্যক", 'error');
+        
+        const btn = document.getElementById('btn-blood-req');
+        const originalText = btn.innerText;
+        btn.innerText = "পাঠানো হচ্ছে...";
+        btn.disabled = true;
+
+        // Query donors matching group
+        const donorsRef = ref(db, 'donors');
+        get(donorsRef).then((snapshot) => {
+            const data = snapshot.val();
+            let count = 0;
+            if(data) {
+                Object.values(data).forEach(donor => {
+                    // Send notification if blood group matches (simple check)
+                    if(donor.bloodGroup === group) {
+                        push(ref(db, `notifications/${donor.uid}`), {
+                             type: 'blood_req',
+                             group: group,
+                             location: location,
+                             contact: contact,
+                             timestamp: Date.now(),
+                             read: false
+                        });
+                        count++;
+                    }
+                });
+            }
+            showToast(`${count} জন ডোনারকে নোটিফিকেশন পাঠানো হয়েছে!`);
+            toggleBloodRequestModal(false);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }).catch(e => {
+            showToast("ত্রুটি: " + e.message, 'error');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    onValue(ref(db, 'donors'), (snapshot) => {
+        allDonors = []; const data = snapshot.val();
+        if(data) { allDonors = Object.values(data); filterDonors(); }
+        else document.getElementById('donor-list').innerHTML = '<div class="text-center p-6 text-gray-400">ডোনার নেই</div>';
+    });
+    
+    window.filterDonors = () => {
+        const filter = document.getElementById('blood-filter').value;
+        const listDiv = document.getElementById('donor-list');
+        const filtered = filter === 'all' ? allDonors : allDonors.filter(d => d.bloodGroup === filter);
+        if(filtered.length === 0) { listDiv.innerHTML = '<div class="text-center p-6 text-gray-400">এই গ্রুপের ডোনার নেই</div>'; return; }
+        let html = '';
+        filtered.forEach(donor => {
+            html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-red-50 flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs border border-red-200">${escapeHTML(donor.bloodGroup)}</div><div><p class="font-bold text-gray-800 text-sm">${escapeHTML(donor.name)}</p><p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>শেষ দান: ${escapeHTML(donor.lastDate)}</p></div></div><a href="tel:${donor.phone}" class="bg-green-500 text-white w-9 h-9 rounded-full flex items-center justify-center shadow hover:bg-green-600"><i class="fa-solid fa-phone text-sm"></i></a></div>`;
+        });
+        listDiv.innerHTML = html;
+    };
+
+    window.submitComplaint = () => {
+        const type = document.getElementById('complaint-type').value;
+        const text = document.getElementById('complaint-text').value.trim();
+        const isAnon = document.getElementById('complaint-anon').checked;
+
+        if(!text) return showToast("অভিযোগের বিস্তারিত লিখুন", 'error');
+
+        const complaintData = {
+            uid: currentUser.uid,
+            authorName: isAnon ? "নাম প্রকাশে অনিচ্ছুক" : userDetails.name,
+            type: type,
+            text: text,
+            timestamp: Date.now(),
+            status: 'Pending' 
+        };
+
+        push(ref(db, 'complaints'), complaintData).then(() => {
+            showToast("অভিযোগ জমা হয়েছে!");
+            document.getElementById('complaint-text').value = "";
+            document.getElementById('complaint-anon').checked = false;
+        }).catch(e => showToast("ত্রুটি: " + e.message, 'error'));
+    };
+
+    window.loadMyComplaints = () => {
+        const listDiv = document.getElementById('my-complaints-list');
+        onValue(query(ref(db, 'complaints'), orderByChild('uid'), startAt(currentUser.uid), endAt(currentUser.uid)), (snap) => {
+            const data = snap.val();
+            if(data) {
+                let html = '';
+                Object.values(data).sort((a,b)=>b.timestamp - a.timestamp).forEach(c => {
+                    let statusColor = 'text-yellow-600 bg-yellow-100';
+                    let statusText = 'জমা হয়েছে';
+                    if(c.status === 'Processing') { statusColor = 'text-blue-600 bg-blue-100'; statusText = 'কাজ চলছে'; }
+                    if(c.status === 'Resolved') { statusColor = 'text-green-600 bg-green-100'; statusText = 'সমাধান হয়েছে'; }
+
+                    html += `
+                    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">${c.type}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${statusColor}">${statusText}</span>
+                        </div>
+                        <p class="text-sm text-gray-800 mt-2">${escapeHTML(c.text)}</p>
+                        <p class="text-[10px] text-gray-400 mt-2 text-right">${timeAgo(c.timestamp)}</p>
+                    </div>`;
+                });
+                listDiv.innerHTML = html;
+            } else {
+                listDiv.innerHTML = '<p class="text-center text-gray-400 text-xs py-4">কোনো অভিযোগ নেই</p>';
+            }
+        });
+    };
+
+    window.togglePrivacy = (checked) => {
+        update(ref(db, 'users/' + currentUser.uid), { privacy_hide_contact: checked })
+            .then(() => showToast("সেটিংস আপডেট হয়েছে"));
+    };
+
+    // Updated Change Font Size with Local Storage
+    window.changeFontSize = (size) => {
+        const body = document.getElementById('body-main');
+        body.classList.remove('text-small', 'text-large');
+        
+        if(size === 'small') body.classList.add('text-small');
+        if(size === 'large') body.classList.add('text-large');
+        
+        // Persist
+        localStorage.setItem('fontSize', size);
+    };
+
+    window.handleDeleteAccount = () => {
+        const confirmDelete = prompt("একাউন্ট ডিলিট করতে 'DELETE' লিখুন:");
+        if (confirmDelete === 'DELETE') {
+            update(ref(db, 'users/' + currentUser.uid), { deleted: true, email: 'deleted', phone: 'deleted' })
+            .then(() => {
+                deleteUser(currentUser).then(() => {
+                    alert("আপনার একাউন্ট ডিলিট করা হয়েছে");
+                    window.location.reload();
+                }).catch(e => showToast("Login again to delete: " + e.message, 'error'));
+            });
+        }
+    };
+
+    window.toggleGlobalSearch = (open) => {
+        const modal = document.getElementById('search-modal');
+        if(open) {
+            modal.classList.remove('hidden-custom');
+            setTimeout(()=>modal.classList.add('open'), 10);
+            document.getElementById('global-search-input').focus();
+        } else {
+            modal.classList.remove('open');
+            setTimeout(()=>modal.classList.add('hidden-custom'), 300);
+        }
+    }
+
+    window.handleGlobalSearch = (queryVal) => {
+        const container = document.getElementById('global-search-results');
+        const q = queryVal.toLowerCase().trim();
+        if(q.length < 1) { 
+            container.innerHTML = '<div class="text-center mt-20 text-gray-400"><i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-30"></i><p>অনুসন্ধান করতে লিখুন</p></div>';
+            return; 
+        }
+
+        let html = '';
+
+        const matchedUsers = allUsers.filter(u => u.name.toLowerCase().includes(q));
+        if(matchedUsers.length > 0) {
+            html += `<h4 class="font-bold text-xs text-gray-500 mb-2 mt-2">মানুষ</h4>`;
+            matchedUsers.slice(0, 3).forEach(u => {
+                const badge = checkUserBadge(u);
+                html += `<div onclick="openUserProfile('${u.uid}'); toggleGlobalSearch(false)" class="bg-white p-3 rounded-lg shadow-sm flex items-center gap-3 cursor-pointer"><div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">${u.name.charAt(0)}</div><span class="text-sm font-bold text-gray-800">${u.name}${badge}</span></div>`;
+            });
+        }
+
+        const matchedMarket = globalMarketItems.filter(i => i.title.toLowerCase().includes(q));
+        if(matchedMarket.length > 0) {
+            html += `<h4 class="font-bold text-xs text-gray-500 mb-2 mt-4">হাট / বাজার</h4>`;
+            matchedMarket.slice(0, 3).forEach(i => {
+                html += `<div onclick="switchPage('market'); toggleGlobalSearch(false)" class="bg-white p-3 rounded-lg shadow-sm flex justify-between items-center cursor-pointer"><span class="text-sm font-bold text-gray-800">${i.title}</span><span class="text-xs text-orange-600 font-bold">৳ ${i.price}</span></div>`;
+            });
+        }
+
+        const postsArr = Object.entries(postsDataGlobal);
+        const matchedPosts = postsArr.filter(([id, p]) => (p.content && p.content.toLowerCase().includes(q)));
+        if(matchedPosts.length > 0) {
+            html += `<h4 class="font-bold text-xs text-gray-500 mb-2 mt-4">পোস্ট</h4>`;
+            matchedPosts.slice(0, 3).forEach(([id, p]) => {
+                html += `<div onclick="openFullCommentModal('${id}'); toggleGlobalSearch(false)" class="bg-white p-3 rounded-lg shadow-sm cursor-pointer"><p class="text-xs text-gray-600 line-clamp-2">${p.content}</p><p class="text-[10px] text-gray-400 mt-1">লিখেছেন: ${p.author}</p></div>`;
+            });
+        }
+
+        let dirMatches = [];
+        Object.entries(globalDirectory).forEach(([cat, items]) => {
+             Object.values(items).forEach(item => {
+                 if(item.name.toLowerCase().includes(q)) dirMatches.push(item);
+             });
+        });
+        if(dirMatches.length > 0) {
+            html += `<h4 class="font-bold text-xs text-gray-500 mb-2 mt-4">ডিরেক্টরি</h4>`;
+            dirMatches.slice(0, 3).forEach(i => {
+                html += `<div class="bg-white p-3 rounded-lg shadow-sm flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${i.name}</span><a href="tel:${i.phone}" class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs"><i class="fa-solid fa-phone"></i></a></div>`;
+            });
+        }
+
+        if(html === '') {
+             container.innerHTML = '<div class="text-center mt-10 text-gray-400"><p>কিছু পাওয়া যায়নি</p></div>';
+        } else {
+            container.innerHTML = html;
+        }
+    }
+</script>
+
+<script>
+    function toggleAuth(v){ 
+        const login = document.getElementById('login-form');
+        const reg = document.getElementById('register-form');
+        const forgot = document.getElementById('forgot-form');
+        
+        login.classList.add('hidden-custom');
+        reg.classList.add('hidden-custom');
+        forgot.classList.add('hidden-custom');
+        
+        if(v === 'login') login.classList.remove('hidden-custom');
+        else if(v === 'register') reg.classList.remove('hidden-custom');
+        else if(v === 'forgot') forgot.classList.remove('hidden-custom');
+    }
+
+    function togglePostModal(s){ 
+        const m = document.getElementById('post-modal');
+        if(s) { 
+            m.classList.remove('hidden-custom'); 
+            history.pushState({modal: 'post'}, null, "#create-post");
+        } else { 
+            m.classList.add('hidden-custom');
+            if(history.state && history.state.modal) history.back();
+        } 
+    }
+    
+    function togglePollModal(s){ 
+        const m = document.getElementById('poll-modal');
+        if(s) { m.classList.remove('hidden-custom'); history.pushState({modal: 'poll'}, null, "#create-poll"); }
+        else { m.classList.add('hidden-custom'); if(history.state && history.state.modal) history.back(); }
+    }
+    
+    function toggleDonorModal(s){ document.getElementById('donor-modal').classList[s?'remove':'add']('hidden-custom'); }
+    function toggleBloodRequestModal(s){ document.getElementById('modal-blood-request').classList[s?'remove':'add']('hidden-custom'); }
+    function toggleEditProfile(s){ document.getElementById('edit-profile-modal').classList[s?'remove':'add']('hidden-custom'); }
+    function toggleSellModal(s){ document.getElementById('sell-modal').classList[s?'remove':'add']('hidden-custom'); }
+    function toggleSidebar(open) {
+        const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebar-overlay');
+        if(open) { sb.classList.add('open'); ov.classList.remove('hidden-custom'); setTimeout(()=>ov.classList.add('open'), 10); } 
+        else { sb.classList.remove('open'); ov.classList.remove('open'); setTimeout(()=>ov.classList.add('hidden-custom'), 300); }
+    }
+    
+    let fabOpen = false;
+    function toggleFab() {
+        fabOpen = !fabOpen;
+        const opts = document.getElementById('fab-options');
+        const main = document.getElementById('main-fab');
+        if(fabOpen) {
+            opts.classList.add('show');
+            main.classList.add('rotate');
+        } else {
+            opts.classList.remove('show');
+            main.classList.remove('rotate');
+        }
+    }
+
+    function switchPage(id, addHistory = true){
+        document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden'));
+        
+        const pages = ['home','services','market','blood','directory','directory-list','profile','people','messages','notifications','view-profile','friends-list', 'complaints', 'settings'];
+        pages.forEach(p => {
+            document.getElementById('page-'+p)?.classList.add('hidden');
+            document.getElementById('btn-'+p)?.classList.remove('nav-active','text-green-600');
+            document.getElementById('btn-'+p)?.classList.add('text-gray-500');
+        });
+        
+        document.getElementById('page-'+id).classList.remove('hidden');
+        
+        const btn = document.getElementById('btn-'+id);
+        if(btn) { 
+            btn.classList.add('nav-active','text-green-600'); 
+            btn.classList.remove('text-gray-500'); 
+        }
+        
+        window.scrollTo(0,0);
+        
+        if(id === 'notifications') {
+            document.getElementById('nav-badge-notice').classList.remove('active');
+            document.getElementById('header-badge-notice').classList.remove('active');
+        }
+
+        if(addHistory) {
+            history.pushState({ page: id }, "", `#${id}`);
+        }
+    }
+
+    window.onpopstate = function(event) {
+        if(document.getElementById('post-modal') && !document.getElementById('post-modal').classList.contains('hidden-custom')) {
+            document.getElementById('post-modal').classList.add('hidden-custom'); return;
+        }
+        if(document.getElementById('poll-modal') && !document.getElementById('poll-modal').classList.contains('hidden-custom')) {
+            document.getElementById('poll-modal').classList.add('hidden-custom'); return;
+        }
+        if(document.getElementById('search-modal') && document.getElementById('search-modal').classList.contains('open')) {
+            toggleGlobalSearch(false); return;
+        }
+
+        if (event.state && event.state.page) {
+            if(event.state.page === 'comment-modal') {
+                 closeFullCommentModal();
+                 history.back(); 
+            } 
+            else if (event.state.page === 'chat-conversation') {
+                 closeChat();
+            }
+            else {
+                 switchPage(event.state.page, false);
+            }
+        } else {
+            switchPage('home', false);
+        }
+    };
+
+    window.addEventListener('click', function(e){ if(!e.target.closest('.relative')) document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden')); });
+</script>
+
+</body>
+</html>
