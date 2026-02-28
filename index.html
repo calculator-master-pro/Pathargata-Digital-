@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Font: Hind Siliguri -->
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CryptoJS for Encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
         /* Base Font Size & Copy Protection */
@@ -73,6 +75,10 @@
         .fab-options.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .fab-btn { transition: transform 0.3s; }
         .fab-btn.rotate { transform: rotate(45deg); background-color: #ef4444; border-color: #ef4444; }
+        
+        /* FAB Scroll Hiding Animation */
+        #fab-container { transition: transform 0.3s ease-in-out; }
+        #fab-container.scroll-hidden { transform: translateY(200%); }
 
         /* Toast */
         #toast-container { position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 400px; pointer-events: none; }
@@ -92,6 +98,10 @@
         #search-modal.open { opacity: 1; pointer-events: auto; }
         #tag-friends-modal, #feeling-modal { transition: transform 0.3s ease-in-out; transform: translateY(100%); }
         #tag-friends-modal.open, #feeling-modal.open { transform: translateY(0); }
+        
+        /* Image Viewer Modal */
+        #image-viewer-modal { transition: opacity 0.3s; opacity: 0; pointer-events: none; }
+        #image-viewer-modal.open { opacity: 1; pointer-events: auto; }
 
         .poll-option { transition: all 0.2s; }
         .poll-fill { transition: width 0.5s ease-out; }
@@ -174,6 +184,11 @@
         .post-images-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .post-images-grid-2 img { height: 250px; object-fit: cover; }
 
+        /* Plan Card Selected Style */
+        .plan-card { transition: all 0.2s; border: 2px solid transparent; }
+        .plan-card.selected { border-color: #16a34a; background-color: #f0fdf4; }
+        .payment-method.selected { border-color: #16a34a; background-color: #f0fdf4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+
     </style>
 </head>
 <body id="body-main">
@@ -248,6 +263,14 @@
                 <input type="password" id="reg-pass" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ সংখ্যা)" class="w-full bg-gray-50 border p-3.5 rounded-xl pr-10 text-base">
                 <i onclick="togglePassword('reg-pass', this)" class="fa-regular fa-eye absolute right-3 top-4 text-gray-500 cursor-pointer"></i>
             </div>
+            
+            <!-- Privacy Policy Checkbox -->
+            <div class="flex items-start gap-2 pt-1">
+                <input type="checkbox" id="reg-privacy-agree" class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 mt-0.5">
+                <label for="reg-privacy-agree" class="text-sm text-gray-600">
+                    আমি <a href="#" id="reg-privacy-link" target="_blank" class="text-green-600 font-bold hover:underline">গোপনীয়তা ও নীতিমালা (Privacy Policy)</a> এর সাথে একমত।
+                </label>
+            </div>
         </div>
         <button onclick="handleRegister()" id="btn-reg-action" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 mt-6 shadow-lg transition active:scale-95 flex justify-center items-center gap-2 text-lg">রেজিস্ট্রেশন সম্পন্ন করুন</button>
         <p class="mt-8 text-center text-sm text-gray-600">আগেই একাউন্ট আছে? <span onclick="toggleAuth('login')" class="text-green-600 font-bold cursor-pointer hover:underline">লগইন করুন</span></p>
@@ -269,7 +292,7 @@
     <div class="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent mt-8"></div>
 </div>
 
-<!-- ৩. সাইডবার মেনু -->
+<!-- ৩. সাইডবার মেনু (আপডেটেড) -->
 <div id="sidebar-overlay" onclick="toggleSidebar(false)" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-40 z-[140] backdrop-blur-sm"></div>
 <div id="sidebar" class="fixed top-0 left-0 bottom-0 w-80 bg-white z-[145] shadow-2xl flex flex-col rounded-r-2xl overflow-hidden">
     <div class="bg-gradient-to-br from-green-600 to-teal-700 text-white pt-10 pb-6 px-6 relative">
@@ -288,10 +311,16 @@
             <li onclick="switchPage('directory'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-blue-700 hover:bg-blue-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg"><i class="fa-solid fa-address-book"></i></div> <span class="font-bold text-base">প্রশাসনিক ডিরেক্টরি</span></li>
             <li onclick="switchPage('market'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-orange-700 hover:bg-orange-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 text-lg"><i class="fa-solid fa-store"></i></div> <span class="font-bold text-base">উপজেলা মার্কেট</span></li>
             <li onclick="switchPage('complaints'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-red-700 hover:bg-red-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center text-red-600 text-lg"><i class="fa-solid fa-box-archive"></i></div> <span class="font-bold text-base">অভিযোগ বক্স</span></li>
+            
+            <!-- New Features: Verification Updated -->
+            <li onclick="switchPage('verification'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-blue-500 hover:bg-blue-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg"><i class="fa-solid fa-certificate"></i></div> <span class="font-bold text-base">ভেরিফিকেশন</span></li>
+            <li onclick="handleInvite(); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-pink-600 hover:bg-pink-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 text-lg"><i class="fa-solid fa-share-nodes"></i></div> <span class="font-bold text-base">বন্ধুদের আমন্ত্রণ</span></li>
+            <li onclick="openRules(); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-teal-600 hover:bg-teal-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-lg"><i class="fa-solid fa-scale-balanced"></i></div> <span class="font-bold text-base">রুলস ও নীতিমালা</span></li>
+
             <li onclick="switchPage('settings'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-lg"><i class="fa-solid fa-gear"></i></div> <span class="font-bold text-base">সেটিংস</span></li>
+            
             <div class="border-t mx-6 my-2 border-gray-100"></div>
             <li id="sidebar-help" onclick="alert('যোগাযোগ: help@patharghata.com'); toggleSidebar(false)" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-4 text-gray-500 hover:bg-gray-50 transition-all"><i class="fa-solid fa-circle-question w-6 text-center"></i> <span class="text-sm font-medium">Help & Support</span></li>
-            <li id="sidebar-privacy" onclick="alert('Coming Soon'); toggleSidebar(false)" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-4 text-gray-500 hover:bg-gray-50 transition-all"><i class="fa-solid fa-shield-cat w-6 text-center"></i> <span class="text-sm font-medium">Privacy Policy</span></li>
         </ul>
     </div>
     <div class="p-5 border-t bg-gray-50 pb-safe">
@@ -300,6 +329,14 @@
 </div>
 
 <!-- ৪. মডাল সমূহ -->
+
+<!-- FULL SCREEN IMAGE VIEWER MODAL -->
+<div id="image-viewer-modal" class="fixed inset-0 bg-black bg-opacity-95 z-[300] hidden-custom flex items-center justify-center" onclick="closeImageViewer()">
+    <button class="absolute top-5 right-5 text-white w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 z-10">
+        <i class="fa-solid fa-xmark text-xl"></i>
+    </button>
+    <img id="full-image-view" class="max-w-full max-h-screen object-contain p-2 transition-transform duration-300">
+</div>
 
 <!-- Tag Friends Modal -->
 <div id="tag-friends-modal" class="fixed inset-0 bg-white z-[210] flex flex-col hidden-custom">
@@ -326,20 +363,6 @@
         <div onclick="selectFeeling('Excited', '🤩')" class="bg-white p-3 rounded-xl border flex items-center gap-3 cursor-pointer hover:bg-yellow-50"><span class="text-2xl">🤩</span> <span class="font-bold text-gray-700">Excited</span></div>
         <div onclick="selectFeeling('Angry', '😡')" class="bg-white p-3 rounded-xl border flex items-center gap-3 cursor-pointer hover:bg-red-50"><span class="text-2xl">😡</span> <span class="font-bold text-gray-700">Angry</span></div>
         <div onclick="selectFeeling('Celebrating', '🎉')" class="bg-white p-3 rounded-xl border flex items-center gap-3 cursor-pointer hover:bg-blue-50"><span class="text-2xl">🎉</span> <span class="font-bold text-gray-700">Celebrating</span></div>
-    </div>
-</div>
-
-<div id="verification-modal" class="fixed inset-0 bg-black bg-opacity-80 z-[210] flex items-center justify-center hidden-custom p-4">
-    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-        <button onclick="document.getElementById('verification-modal').classList.add('hidden-custom')" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
-        <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-2">একাউন্ট ভেরিফিকেশন</h3>
-        <p class="text-xs text-gray-500 mb-4">আপনার সঠিক তথ্য দিন। এডমিন যাচাই করে আপনার প্রোফাইলে ভেরিফাইড ব্যাজ প্রদান করবেন।</p>
-        <div class="space-y-4">
-            <div><label class="text-xs font-bold text-gray-500 block mb-1">জাতীয় পরিচয়পত্র (NID) / জন্ম নিবন্ধন নম্বর</label><input type="text" id="verify-nid" placeholder="নম্বর লিখুন" class="w-full bg-gray-50 border p-2.5 rounded-lg text-sm"></div>
-            <div><label class="text-xs font-bold text-gray-500 block mb-1">আইডি কার্ডের ছবি</label><input type="file" id="verify-doc-img" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700"></div>
-             <div><label class="text-xs font-bold text-gray-500 block mb-1">আপনার ছবি (আইডি কার্ড সহ)</label><input type="file" id="verify-user-img" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700"></div>
-        </div>
-        <button onclick="submitVerification()" id="btn-verify-submit" class="w-full bg-blue-600 text-white font-bold py-3 mt-6 rounded-lg shadow hover:bg-blue-700 transition flex justify-center items-center gap-2">আবেদন জমা দিন</button>
     </div>
 </div>
 
@@ -662,10 +685,11 @@
             <h3 class="font-bold text-gray-700 mb-4 border-l-4 border-yellow-500 pl-3">যোগ্যতা সমূহ (Criteria)</h3>
             
             <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+                <!-- Updated Criteria: 2000 Friends -->
                 <div class="criteria-item">
                     <div>
-                        <h4 class="font-bold text-sm text-gray-800">৫০০ ফলোয়ার/বন্ধু</h4>
-                        <p class="text-xs text-gray-500 mt-1">আপনার প্রোফাইলে অন্তত ৫০০ বন্ধু থাকতে হবে</p>
+                        <h4 class="font-bold text-sm text-gray-800">২০০০ ফলোয়ার/বন্ধু</h4>
+                        <p class="text-xs text-gray-500 mt-1">আপনার প্রোফাইলে অন্তত ২০০০ বন্ধু থাকতে হবে</p>
                     </div>
                     <div id="crit-follower-icon" class="criteria-icon criteria-cross"><i class="fa-solid fa-xmark"></i></div>
                 </div>
@@ -740,14 +764,14 @@
                 <div class="px-4 py-3 border-b bg-gray-50 overflow-x-auto whitespace-nowrap"><h4 class="text-xs font-bold text-gray-500 mb-2">Active Friends</h4><div id="quick-chat-friends" class="flex gap-4"><p class="text-xs text-gray-400">লোড হচ্ছে...</p></div></div>
                 <div id="chat-list-container" class="space-y-0"><p class="text-center text-gray-400 mt-10 text-sm">লোড হচ্ছে...</p></div>
             </div>
-            <div id="chat-conversation-view" class="hidden hidden-custom h-[calc(100vh-130px)] flex flex-col bg-gray-50 relative">
-                <div class="bg-white p-3 border-b flex items-center gap-3 sticky top-0 z-20 shadow-sm">
+            <div id="chat-conversation-view" class="hidden hidden-custom fixed inset-0 z-[200] bg-white flex flex-col">
+                <div class="bg-white p-3 border-b flex items-center gap-3 sticky top-0 z-20 shadow-sm pt-safe">
                     <button onclick="closeChat()" class="text-gray-500 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fa-solid fa-arrow-left text-lg"></i></button>
                     <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold border border-green-200 overflow-hidden" id="chat-header-img">U</div>
                     <h3 onclick="openUserProfile(currentChatUser.uid)" class="font-bold text-gray-800 cursor-pointer text-lg" id="chat-header-name">User</h3>
                 </div>
-                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f0f2f5]"></div>
-                <div class="bg-white p-3 border-t flex gap-2 items-center absolute bottom-0 w-full pb-safe">
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f0f2f5] pb-24"></div>
+                <div class="bg-white p-3 border-t flex gap-2 items-center fixed bottom-0 w-full pb-safe z-50">
                     <input type="file" id="chat-img-input" accept="image/*" class="hidden" onchange="handleChatImageSelect()">
                     <i class="fa-solid fa-image text-xl text-gray-500 p-2 cursor-pointer hover:bg-gray-100 rounded-full" onclick="document.getElementById('chat-img-input').click()"></i>
                     <input type="text" id="msg-input" onkeydown="handleEnter(event, 'chat')" placeholder="মেসেজ লিখুন..." class="flex-1 bg-gray-100 rounded-full px-5 py-3 text-sm border-0 focus:ring-1 focus:ring-green-500">
@@ -953,7 +977,6 @@
                     <div class="p-3 bg-gray-50 border-b font-bold text-gray-700 text-sm">একাউন্ট</div>
                     <div class="p-4 space-y-4">
                         <div onclick="toggleEditProfile(true)" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">প্রোফাইল এডিট</span><i class="fa-solid fa-pen-to-square text-gray-400 text-lg"></i></div>
-                        <div onclick="document.getElementById('verification-modal').classList.remove('hidden-custom')" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">একাউন্ট ভেরিফিকেশন</span><i class="fa-solid fa-certificate text-blue-500 text-lg"></i></div>
                         <div class="flex items-center justify-between p-2"><span class="text-base text-gray-700">মোবাইল/ইমেইল গোপন রাখুন</span><input type="checkbox" onchange="togglePrivacy(this.checked)" id="setting-privacy-toggle" class="w-6 h-6 text-green-600 rounded"></div>
                         <div onclick="toggleAuth('forgot'); handleLogout()" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">পাসওয়ার্ড পরিবর্তন</span><i class="fa-solid fa-key text-gray-400 text-lg"></i></div>
                     </div>
@@ -973,9 +996,96 @@
                     <div class="p-3 bg-red-50 border-b font-bold text-red-700 text-sm">ডেঞ্জার জোন</div>
                     <div class="p-4"><button onclick="handleDeleteAccount()" class="w-full border border-red-500 text-red-600 py-3 rounded-lg font-bold text-base hover:bg-red-50 transition">একাউন্ট ডিলিট করুন</button></div>
                 </div>
-                 <div class="text-center text-xs text-gray-400 mt-4">ভার্সন ৩.৬.০ | সাপোর্ট: help@patharghata.com</div>
+                 <div class="text-center text-xs text-gray-400 mt-4">ভার্সন ৩.৮.০ | সাপোর্ট: help@patharghata.com</div>
             </div>
         </div>
+
+        <!-- NEW FULL SCREEN VERIFICATION PAGE -->
+        <div id="page-verification" class="hidden p-0 min-h-screen bg-gray-50 pb-20">
+            <div class="bg-white p-4 sticky top-0 z-30 shadow-sm border-b pt-safe flex items-center gap-2">
+                <button onclick="switchPage('home')" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                <h2 class="text-xl font-bold text-gray-800">ভেরিফিকেশন</h2>
+            </div>
+            
+            <div class="p-4" id="verification-content-area">
+                <!-- Status Banner (Dynamic) -->
+                <div id="verify-status-banner" class="hidden mb-6"></div>
+
+                <!-- Main Form (Hidden if Pending/Verified) -->
+                <div id="verify-form-container">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-blue-100 mb-6 text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600 text-3xl">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800">ভেরিফাইড হোন</h3>
+                        <p class="text-sm text-gray-500 mt-1">আপনার প্রোফাইলে ব্লু ব্যাজ যুক্ত করুন এবং বিশ্বাসযোগ্যতা বাড়ান।</p>
+                    </div>
+
+                    <h4 class="font-bold text-gray-700 mb-3 border-l-4 border-blue-500 pl-3">প্যাকেজ নির্বাচন করুন</h4>
+                    <div id="verification-plans-container" class="space-y-3 mb-6">
+                        <p class="text-center text-sm text-gray-400">লোড হচ্ছে...</p>
+                    </div>
+                    <input type="hidden" id="selected-plan-id">
+
+                    <!-- Payment Section -->
+                    <div id="verification-payment-section" class="hidden bg-white p-4 rounded-xl shadow-sm mb-6">
+                        <h4 class="font-bold text-sm text-gray-700 mb-3">পেমেন্ট মেথড:</h4>
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <div onclick="selectPaymentMethod('Bkash')" class="payment-method border p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition" id="pay-bkash">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7-3pW0rX1C7s7s7s7s7s7s7s7s7s7s7s7s7s&s" alt="Bkash" class="h-8 object-contain">
+                                <span class="text-xs font-bold mt-1">Bkash</span>
+                            </div>
+                            <div onclick="selectPaymentMethod('Nagad')" class="payment-method border p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition" id="pay-nagad">
+                                <img src="https://downloadr2.apkmirror.com/wp-content/uploads/2019/07/5d26305f8c679.png" alt="Nagad" class="h-8 object-contain">
+                                <span class="text-xs font-bold mt-1">Nagad</span>
+                            </div>
+                            <div onclick="selectPaymentMethod('Rocket')" class="payment-method border p-2 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition" id="pay-rocket">
+                                <img src="https://seeklogo.com/images/D/dutch-bangla-rocket-logo-B4D1CC458D-seeklogo.com.png" alt="Rocket" class="h-8 object-contain">
+                                <span class="text-xs font-bold mt-1">Rocket</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selected-payment-method">
+                        
+                        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-4">
+                            <p class="text-xs text-gray-600">দয়া করে <span id="admin-number" class="font-bold text-gray-900 text-sm">...</span> নম্বরে Send Money করুন।</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">সেন্ডার নম্বর</label>
+                                <input type="tel" id="verify-payment-number" placeholder="যে নম্বর থেকে টাকা পাঠিয়েছেন" class="w-full bg-gray-50 border p-3 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">Transaction ID</label>
+                                <input type="text" id="verify-trx-id" placeholder="TrxID (Example: 9H7D...)" class="w-full bg-gray-50 border p-3 rounded-lg text-sm uppercase">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents Section -->
+                    <div id="verification-docs-section" class="hidden bg-white p-4 rounded-xl shadow-sm mb-6">
+                         <h4 class="font-bold text-sm text-gray-700 mb-3">প্রয়োজনীয় কাগজপত্র:</h4>
+                         <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">NID / জন্ম নিবন্ধন নম্বর</label>
+                                <input type="text" id="verify-nid" placeholder="নম্বর দিন" class="w-full bg-gray-50 border p-3 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">কার্ডের ছবি (NID/Birth Certificate)</label>
+                                <input type="file" id="verify-doc-img" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 block mb-1">আপনার সদ্য তোলা ছবি</label>
+                                <input type="file" id="verify-user-img" accept="image/*" class="w-full bg-gray-50 border border-gray-200 p-2 rounded-lg text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="submitVerification()" id="btn-verify-submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition flex justify-center items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed hidden">সাবমিট করুন</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 z-50 text-gray-500 max-w-[480px] mx-auto shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-safe">
@@ -1000,9 +1110,9 @@
     import { getDatabase, ref, push, set, onValue, onChildAdded, onChildChanged, get, update, remove, query, limitToLast, runTransaction, startAt, endAt, orderByChild, orderByKey, equalTo, limitToFirst } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // --- CONFIGURATION ---
+     // --- CONFIGURATION ---
     const APP_CONFIG = {
-        firebase: { apiKey: "AIzaSyBfI-THOXOvhyL7LumZVKixtTVwF94CjsI", authDomain: "pathargata-digital-comnity-ltd-default-rtdb.firebaseio.com", databaseURL: "https://pathargata-digital-comnity-ltd-default-rtdb.firebaseio.com", projectId: "pathargata-digital-comnity-ltd", storageBucket: "pathargata-digital-comnity-ltd.firebasestorage.app", messagingSenderId: "991014085926", appId: "1:991014085926:android:b249e489d8424433ed4de7" },
+        firebase: { apiKey: "AIzaSyBfI-THOXOvhyL7LumZVKixtTVwF94CjsI", authDomain: "pathargata-digital-comnity-ltd.firebasestorage.app", databaseURL: "https://pathargata-digital-comnity-ltd-default-rtdb.firebaseio.com", projectId: "pathargata-digital-comnity-ltd", storageBucket: "pathargata-digital-comnity-ltd.firebasestorage.app", messagingSenderId: "991014085926", appId: "1:991014085926:android:b249e489d8424433ed4de7" },
         locations: { "Patharghata Union Sadar": ["পাথরঘাটা", "গহরপুর", "নিজলাঠিমারা", "হাতেমপুর", "বড়ইতলা", "বড় টেংরা", "কোড়ালিয়া", "রুহিতা", "পদ্মা", "হাড়িটানা", "বাদুরতলা", "চরলাঠিমারা"], "Char Duani Union": ["চরদুয়ানী", "দক্ষিণ চরদুয়ানী", "মঠের খাল", "হোগলাপাশা", "গাববাড়িয়া"], "Kakchira Union": ["কাকচিরা", "জালিয়াঘাটা", "রূপধন", "বাইলাচারা"], "Kalmegha Union": ["কালমেঘা", "ঘুটাবাছা", "কুপদোন", "পশ্চিম কালমেঘা"], "Kathaltoli Union": ["কাঁঠালতলী", "তালতলী", "সাপলেজা", "করুণা"], "Nachnapara Union": ["নাচনাপাড়া", "জ্ঞানপাড়া", "বাঁশতলা", "মানিকখালী"], "Raihanpur Union": ["রায়হানপুর", "শতকর", "লেমুয়া", "হরিণঘাটা"] },
         services: { "directory": { title: "ডিরেক্টরি", icon: "fa-address-book", color: "text-blue-600", bg: "bg-blue-50" }, "blood": { title: "রক্তদান", icon: "fa-droplet", color: "text-red-600", bg: "bg-red-50" }, "emergency": { title: "জরুরী এলার্ট", icon: "fa-triangle-exclamation", color: "text-red-600", bg: "bg-red-50" }, "history_tourism": { title: "পর্যটন", icon: "fa-landmark", color: "text-purple-600", bg: "bg-purple-50" }, "transport": { title: "পরিবহন", icon: "fa-bus", color: "text-teal-600", bg: "bg-teal-50" }, "education": { title: "শিক্ষা", icon: "fa-graduation-cap", color: "text-yellow-600", bg: "bg-yellow-50" }, "complaints": { title: "অভিযোগ", icon: "fa-box-archive", color: "text-red-600", bg: "bg-red-50" }, "market": { title: "হাট", icon: "fa-store", color: "text-orange-600", bg: "bg-orange-50" } }
     };
@@ -1022,6 +1132,13 @@
     let isFeedLoading = false;
     let hasMorePosts = true;
     let feedObserver = null;
+    let lastScrollTop = 0; // For scroll direction detection
+    
+    // Profile Pagination Globals
+    let profilePostsFullList = [];
+    let currentProfileRenderCount = 0;
+    let isProfileRendering = false;
+    let currentProfileViewMode = '';
     
     // Notification Pagination Variables
     let lastNotifKey = null;
@@ -1031,6 +1148,17 @@
     window.selectedImages = [];
     window.taggedUsers = [];
     window.selectedFeeling = null;
+    
+    // --- ENCRYPTION HELPERS (Simple AES) ---
+    const SECRET_KEY = "PatharghataDigitalSecretKey"; 
+    window.encryptMsg = (text) => { return CryptoJS.AES.encrypt(text, SECRET_KEY).toString(); };
+    window.decryptMsg = (cipherText) => { 
+        try {
+            const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+            const originalText = bytes.toString(CryptoJS.enc.Utf8);
+            return originalText || cipherText; // Return original if decryption fails (backward compatibility)
+        } catch(e) { return cipherText; }
+    };
 
     // --- HELPER FUNCTIONS ---
     window.escapeHTML = (str) => { if (!str) return ""; return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
@@ -1199,6 +1327,28 @@
         } else { window.currentUser = null; authScreen.classList.remove('hidden-custom'); mainApp.classList.add('hidden-custom'); document.getElementById('login-form').classList.remove('hidden-custom'); }
     });
 
+    // --- SCROLL HANDLER (UPDATED for Profile Infinite Scroll) ---
+    window.onscroll = function() {
+        // FAB Logic
+        if (document.getElementById('page-home') && !document.getElementById('page-home').classList.contains('hidden')) {
+            let st = window.pageYOffset || document.documentElement.scrollTop;
+            const fabContainer = document.getElementById('fab-container');
+            
+            if (st > lastScrollTop && st > 50) { fabContainer.classList.add('scroll-hidden'); } 
+            else { fabContainer.classList.remove('scroll-hidden'); }
+            lastScrollTop = st <= 0 ? 0 : st; 
+        }
+
+        // Profile Infinite Scroll Logic
+        if ((document.getElementById('page-profile').classList.contains('hidden') === false) || 
+            (document.getElementById('page-view-profile').classList.contains('hidden') === false)) {
+            
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                renderProfileChunk();
+            }
+        }
+    };
+
     // --- VIDEO AUTOPLAY OBSERVER ---
     function setupVideoObserver() {
         const videoObserver = new IntersectionObserver((entries) => {
@@ -1256,23 +1406,35 @@
         }
     };
 
+    // --- UPDATED SEND MSG WITH ENCRYPTION ---
     window.sendMsg = (imageUrl = null) => { 
         if(!currentChatUser) return; 
         const input = document.getElementById('msg-input'); const text = input.value.trim(); 
         if(!text && !imageUrl) return; 
         const btn = document.getElementById('btn-chat-send');
         const chatId = getChatId(window.currentUser.uid, currentChatUser.uid); const ts = Date.now(); 
+        
+        // Encrypt Text
+        const encryptedText = text ? window.encryptMsg(text) : "";
+
         const msgData = { sender: window.currentUser.uid, timestamp: ts };
-        if (text) msgData.text = text; if (imageUrl) msgData.image = imageUrl;
+        if (text) msgData.text = encryptedText; // Store Encrypted
+        if (imageUrl) msgData.image = imageUrl;
+        
         push(ref(db, `chats/${chatId}`), msgData); 
-        const lastMsg = imageUrl ? (text ? "📷 " + text : "📷 ছবি পাঠিয়েছেন") : text;
+        
+        // For Last Message in User Chats (Encrypted)
+        const lastMsg = imageUrl ? (text ? "📷 " + encryptedText : "📷 ছবি পাঠিয়েছেন") : encryptedText;
         const myUpdate = { name: currentChatUser.name, lastMessage: "You: " + lastMsg, timestamp: ts }; 
         const peerUpdate = { name: userDetails.name, lastMessage: lastMsg, timestamp: ts }; 
+        
         update(ref(db, `user_chats/${window.currentUser.uid}/${currentChatUser.uid}`), myUpdate); 
         update(ref(db, `user_chats/${currentChatUser.uid}/${window.currentUser.uid}`), peerUpdate); 
+        
         input.value = ""; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>'; btn.disabled = false;
     };
 
+    // --- UPDATED LOAD MESSAGES (Decryption & Scrolling) ---
     function loadMessages(otherUid) { 
         const chatId = getChatId(window.currentUser.uid, otherUid); 
         const div = document.getElementById('messages-container'); 
@@ -1284,11 +1446,80 @@
                     const isMe = m.sender === window.currentUser.uid; 
                     let content = '';
                     if (m.image) content += `<img src="${m.image}" class="rounded-lg mb-1 max-w-full h-auto cursor-pointer" onclick="window.open('${m.image}')">`;
-                    if (m.text) content += `<span>${escapeHTML(m.text)}</span>`;
+                    
+                    // Decrypt Message
+                    if (m.text) {
+                        const decrypted = window.decryptMsg(m.text);
+                        content += `<span>${escapeHTML(decrypted)}</span>`;
+                    }
+                    
                     return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-2"><div class="px-4 py-2 max-w-[75%] text-sm ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'}">${content}</div></div>`; 
                 }).join('');
-                requestAnimationFrame(() => { div.scrollTop = div.scrollHeight; }); 
+                
+                // Better Scroll to Bottom
+                setTimeout(() => {
+                    div.scrollTop = div.scrollHeight;
+                }, 100);
             } else div.innerHTML = '<p class="text-center text-xs text-gray-400 mt-4">কথপোকথন শুরু করুন</p>';
+        }); 
+    }
+
+    // --- UPDATED LOAD CHAT LIST (Fetch Profile Pic, Fixed Layout, Decryption) ---
+    function loadChatList(uid) { 
+        onValue(ref(db, `user_chats/${uid}`), async (snap) => { 
+            const list = snap.val() || {}; 
+            const container = document.getElementById('chat-list-container'); 
+            
+            if(Object.keys(list).length > 0) {
+                // Prepare Promises to fetch user profile pics
+                const promises = Object.entries(list).sort((a,b)=>b[1].timestamp - a[1].timestamp).map(async ([peerUid, info]) => {
+                    const userData = await getUserData(peerUid);
+                    const profilePic = userData?.profile_pic;
+                    return { peerUid, info, profilePic };
+                });
+
+                const chatItems = await Promise.all(promises);
+
+                container.innerHTML = chatItems.map(({peerUid, info, profilePic}) => {
+                    // Decrypt Last Message for preview
+                    let rawLastMsg = info.lastMessage || "";
+                    let displayMsg = rawLastMsg;
+                    
+                    // Check if it starts with "You: "
+                    let prefix = "";
+                    if(rawLastMsg.startsWith("You: ")) {
+                        prefix = "You: ";
+                        rawLastMsg = rawLastMsg.substring(5);
+                    }
+                    
+                    // Check if image
+                    if(rawLastMsg.includes("📷")) {
+                        // Keep simple
+                    } else {
+                        rawLastMsg = window.decryptMsg(rawLastMsg);
+                    }
+                    displayMsg = prefix + rawLastMsg;
+
+                    let av = profilePic 
+                        ? `<img src="${profilePic}" class="w-12 h-12 rounded-full shrink-0 object-cover border border-gray-200">`
+                        : `<div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-700 text-xl shrink-0">${escapeHTML(info.name).charAt(0)}</div>`; 
+
+                    // Updated HTML Structure for Fixed Layout
+                    return `
+                    <div onclick="startChat('${peerUid}', '${escapeHTML(info.name)}')" class="p-4 border-b bg-white hover:bg-gray-50 cursor-pointer flex items-center gap-3">
+                        ${av}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <h4 class="font-bold text-gray-800 text-base truncate pr-2">${escapeHTML(info.name)}</h4>
+                                <span class="text-[10px] text-gray-400 shrink-0 whitespace-nowrap">${timeAgo(info.timestamp)}</span>
+                            </div>
+                            <p class="text-sm text-gray-500 truncate block">${escapeHTML(displayMsg)}</p>
+                        </div>
+                    </div>`; 
+                }).join('');
+            } else {
+                container.innerHTML = '<p class="text-center text-gray-400 mt-10 text-sm">কোনো কনভারসেশন নেই</p>'; 
+            }
         }); 
     }
 
@@ -1408,22 +1639,55 @@
 
     window.toggleLike = (postId) => { const btns = document.querySelectorAll(`[id^="like-btn-${postId}"]`), icons = document.querySelectorAll(`[id^="like-icon-${postId}"]`), countSpans = document.querySelectorAll(`[id^="like-cnt-${postId}"]`); if(icons.length === 0) return; const isLiked = icons[0].classList.contains('fa-solid'); let newCount = parseInt(countSpans[0].innerText) + (isLiked ? -1 : 1); icons.forEach(i => i.classList[isLiked ? 'remove' : 'add']('fa-solid', 'text-green-600') || i.classList[isLiked ? 'add' : 'remove']('fa-regular')); countSpans.forEach(s => s.innerText = Math.max(0, newCount)); const likeRef = ref(db, `posts/${postId}/likes/${window.currentUser.uid}`); get(likeRef).then((snap) => { if (snap.exists()) set(likeRef, null); else { set(likeRef, true); get(ref(db, `posts/${postId}`)).then(postSnap => { const post = postSnap.val(); if(post && post.uid !== window.currentUser.uid) push(ref(db, `notifications/${post.uid}`), { type: 'like', fromUid: window.currentUser.uid, fromName: userDetails.name, postId: postId, timestamp: Date.now(), read: false }); }); } }); };
     
+    // --- UPDATED PROFILE POST LOAD (Fetch All + Client Side Pagination) ---
     window.loadProfilePosts = (targetUid, containerId) => { 
         const feedDiv = document.getElementById(containerId); 
         feedDiv.innerHTML = '<div class="flex justify-center py-6"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>'; 
         
-        get(query(ref(db, 'posts'), limitToLast(100))).then(snap => { 
+        currentProfileViewMode = containerId; // Store which container
+        currentProfileRenderCount = 0;
+        profilePostsFullList = [];
+
+        // Query SPECIFICALLY for this user's posts using orderByChild
+        const q = query(ref(db, 'posts'), orderByChild('uid'), equalTo(targetUid));
+        
+        get(q).then(snap => { 
             const data = snap.val() || {};
-            const allPosts = Object.entries(data)
+            // Convert to array and sort by time descending
+            profilePostsFullList = Object.entries(data)
                 .map(([id, post]) => ({ id, ...post }))
-                .filter(post => post.uid === targetUid)
                 .sort((a,b)=>b.timestamp-a.timestamp);
                 
-            feedDiv.innerHTML = allPosts.length > 0 ? allPosts.map(post => createPostHTML(post, post.id)).join('') : '<p class="text-center text-gray-400 py-10">কোনো পোস্ট নেই</p>';
+            feedDiv.innerHTML = ''; // Clear loader
+            
+            if (profilePostsFullList.length === 0) {
+                 feedDiv.innerHTML = '<p class="text-center text-gray-400 py-10">কোনো পোস্ট নেই</p>';
+            } else {
+                renderProfileChunk(); // Render first batch
+            }
         }).catch(e => {
             console.error("Profile Post Load Error:", e);
             feedDiv.innerHTML = '<p class="text-center text-red-400 py-10">পোস্ট লোড হতে সমস্যা</p>';
         }); 
+    }
+
+    // New Function to Render Chunks of Profile Posts
+    window.renderProfileChunk = () => {
+        if(isProfileRendering || currentProfileRenderCount >= profilePostsFullList.length) return;
+        isProfileRendering = true;
+
+        const container = document.getElementById(currentProfileViewMode);
+        const batchSize = 5;
+        const nextBatch = profilePostsFullList.slice(currentProfileRenderCount, currentProfileRenderCount + batchSize);
+        
+        let html = '';
+        nextBatch.forEach(post => {
+            html += createPostHTML(post, post.id);
+        });
+
+        container.insertAdjacentHTML('beforeend', html);
+        currentProfileRenderCount += batchSize;
+        isProfileRendering = false;
     }
     
     window.filterFeed = (type) => {
@@ -1586,7 +1850,17 @@
 
     // --- END PAGINATION ---
 
-    function loadDynamicSidebar() { onValue(ref(db, 'admin_settings/links'), (snap) => { const links = snap.val() || {}; if(links.help) document.getElementById('sidebar-help').onclick = () => { window.location.href = links.help; toggleSidebar(false); }; if(links.privacy) document.getElementById('sidebar-privacy').onclick = () => { window.location.href = links.privacy; toggleSidebar(false); }; }); }
+    function loadDynamicSidebar() { 
+        onValue(ref(db, 'admin_settings/links'), (snap) => { const links = snap.val() || {}; if(links.help) document.getElementById('sidebar-help').onclick = () => { window.location.href = links.help; toggleSidebar(false); }; }); 
+        
+        // Load Privacy Policy Link for Registration Form
+        onValue(ref(db, 'admin_settings/privacy_link'), (snap) => {
+            const link = snap.val();
+            if(link) {
+                document.getElementById('reg-privacy-link').href = link;
+            }
+        });
+    }
     
     window.loadVillagesForUnion = (unionName, targetId) => { 
         const select = document.getElementById(targetId); select.innerHTML = '<option value="">লোডিং...</option>'; select.disabled = true; 
@@ -1692,7 +1966,10 @@
     window.handleRegister = async () => { 
         const name = document.getElementById('reg-name').value.trim(), email = document.getElementById('reg-email').value.trim(), phone = document.getElementById('reg-phone').value.trim(), pass = document.getElementById('reg-pass').value, union = document.getElementById('reg-union').value, village = document.getElementById('reg-village').value;
         const file = document.getElementById('reg-profile-pic').files[0];
+        const isPolicyChecked = document.getElementById('reg-privacy-agree').checked;
         
+        if (!isPolicyChecked) return showToast("দয়া করে গোপনীয়তা ও নীতিমালার সাথে একমত হোন", "error");
+
         const nameRegex = /^[a-zA-Z\u0980-\u09FF\s]+$/;
         if(!name || !email || !phone || !pass || !union || !village) return showToast("সব তথ্য দিন!", 'error'); 
         if(!nameRegex.test(name)) return showToast("নামে ইমোজি বা সিম্বল ব্যবহার করা যাবে না", 'error');
@@ -1833,6 +2110,23 @@
         navigator.clipboard.writeText(text).then(() => showToast("টেক্সট কপি হয়েছে"));
     }
 
+    // --- FULL SCREEN IMAGE VIEWER LOGIC ---
+    window.openImageViewer = (src) => {
+        document.getElementById('full-image-view').src = src;
+        const modal = document.getElementById('image-viewer-modal');
+        modal.classList.remove('hidden-custom');
+        setTimeout(() => modal.classList.add('open'), 10);
+    }
+
+    window.closeImageViewer = () => {
+        const modal = document.getElementById('image-viewer-modal');
+        modal.classList.remove('open');
+        setTimeout(() => {
+            modal.classList.add('hidden-custom');
+            document.getElementById('full-image-view').src = '';
+        }, 300);
+    }
+
     // --- POST HTML GENERATOR ---
     function createPostHTML(post, id) { 
         let privacyIcon = '<i class="fa-solid fa-earth-americas text-[10px] text-gray-400"></i>';
@@ -1844,7 +2138,7 @@
         let myInlineAvatar = userDetails.profile_pic ? `<img src="${userDetails.profile_pic}" class="w-9 h-9 rounded-full object-cover shrink-0 border border-gray-100">` : `<div class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 shrink-0"><i class="fa-solid fa-user"></i></div>`;
         
         const isLiked = post.likes && post.likes[window.currentUser.uid], likeCount = post.likes ? Object.keys(post.likes).length : 0, commentCount = post.comments ? Object.keys(post.comments).length : 0;
-        let badge = post.authorRole === 'journalist' ? `<i class="fa-solid fa-feather-pointed journalist-badge"></i>` : (post.authorVerified ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : "");
+                let badge = post.authorRole === 'journalist' ? `<i class="fa-solid fa-feather-pointed journalist-badge"></i>` : (post.authorVerified ? `<i class="fa-solid fa-circle-check verified-badge"></i>` : "");
         let locationTag = (post.union ? `<span class="bg-gray-100 text-[10px] px-2 py-0.5 rounded-full text-gray-500 ml-2">${post.union}</span>` : '') + (post.village ? `<span class="bg-green-50 text-[10px] px-2 py-0.5 rounded-full text-green-600 ml-1 border border-green-100">${post.village}</span>` : '');
         
         // --- Header Text Construction (Tagged + Feeling) ---
@@ -1898,7 +2192,8 @@
                  mediaHtml = `<div class="mb-3 w-full bg-black rounded-lg overflow-hidden relative shadow-sm"><video src="${images[0]}" controls class="w-full h-auto max-h-[400px]" playsinline preload="metadata"></video></div>`;
             } else {
                  const gridClass = images.length === 1 ? 'post-images-grid-1' : 'post-images-grid-2';
-                 const imgsHtml = images.map(img => `<img src="${img}" class="w-full h-full object-cover">`).join('');
+                 // Add onclick to images for full screen view
+                 const imgsHtml = images.map(img => `<img src="${img}" onclick="openImageViewer('${img}')" class="w-full h-full object-cover cursor-pointer">`).join('');
                  
                  mediaHtml = `<div class="mb-3 w-full bg-gray-200 rounded-lg overflow-hidden border border-gray-200 relative ${images.length === 1 ? 'min-h-[200px]' : ''} ${gridClass}">${imgsHtml}</div>`;
             }
@@ -2023,7 +2318,7 @@
         });
     };
     
-    // --- MONETIZATION LOGIC ---
+    // --- MONETIZATION LOGIC (UPDATED: 2000 Friends) ---
     window.checkMonetizationStatus = () => {
         const hasVerified = !!userDetails.isVerified;
         const friendCount = myFriends.length;
@@ -2035,13 +2330,24 @@
 
     function updateMonetizationUI(friends, verified, posts) {
         const btn = document.getElementById('btn-monetization-apply');
+        
+        // Updated criteria: 2000 friends
         const fIcon = document.getElementById('crit-follower-icon');
-        if(friends >= 500) { fIcon.classList.replace('criteria-cross', 'criteria-check'); fIcon.innerHTML = '<i class="fa-solid fa-check"></i>'; } else { fIcon.classList.replace('criteria-check', 'criteria-cross'); fIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>'; }
+        if(friends >= 2000) { 
+            fIcon.classList.replace('criteria-cross', 'criteria-check'); 
+            fIcon.innerHTML = '<i class="fa-solid fa-check"></i>'; 
+        } else { 
+            fIcon.classList.replace('criteria-check', 'criteria-cross'); 
+            fIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>'; 
+        }
+        
         const vIcon = document.getElementById('crit-verified-icon');
         if(verified) { vIcon.classList.replace('criteria-cross', 'criteria-check'); vIcon.innerHTML = '<i class="fa-solid fa-check"></i>'; } else { vIcon.classList.replace('criteria-check', 'criteria-cross'); vIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>'; }
+        
         const pIcon = document.getElementById('crit-post-icon');
         if(posts >= 10) { pIcon.classList.replace('criteria-cross', 'criteria-check'); pIcon.innerHTML = '<i class="fa-solid fa-check"></i>'; } else { pIcon.classList.replace('criteria-check', 'criteria-cross'); pIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>'; }
-        if(friends >= 500 && verified && posts >= 10) { btn.disabled = false; } else { btn.disabled = true; }
+        
+        if(friends >= 2000 && verified && posts >= 10) { btn.disabled = false; } else { btn.disabled = true; }
     }
 
     window.applyForMonetization = () => {
@@ -2116,16 +2422,6 @@
     window.closeChat = () => { document.getElementById('chat-list-view').classList.remove('hidden', 'hidden-custom'); document.getElementById('chat-conversation-view').classList.add('hidden', 'hidden-custom'); currentChatUser = null; };
     function getChatId(uid1, uid2) { return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`; }
     
-    function loadChatList(uid) { 
-        onValue(ref(db, `user_chats/${uid}`), (snap) => { 
-            const list = snap.val() || {}; const container = document.getElementById('chat-list-container'); 
-            container.innerHTML = Object.keys(list).length > 0 ? Object.entries(list).sort((a,b)=>b[1].timestamp - a[1].timestamp).map(([peerUid, info]) => { 
-                let av = `<div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center font-bold text-green-700 text-xl">${escapeHTML(info.name).charAt(0)}</div>`; 
-                return `<div onclick="startChat('${peerUid}', '${escapeHTML(info.name)}')" class="p-4 border-b bg-white hover:bg-gray-50 cursor-pointer flex items-center gap-3">${av}<div class="flex-1"><div class="flex justify-between"><h4 class="font-bold text-gray-800 text-base">${escapeHTML(info.name)}</h4><span class="text-[10px] text-gray-400">${timeAgo(info.timestamp)}</span></div><p class="text-sm text-gray-500 truncate">${escapeHTML(info.lastMessage)}</p></div></div>`; 
-            }).join('') : '<p class="text-center text-gray-400 mt-10 text-sm">কোনো কনভারসেশন নেই</p>'; 
-        }); 
-    }
-
     onValue(ref(db, 'notices'), (snapshot) => { const data = snapshot.val(); if(data) { const notice = Object.values(data).pop(); document.getElementById('live-notices').innerHTML = `<div class="bg-orange-50 p-4 m-3 rounded-xl border-l-4 border-orange-500 flex items-start gap-3 shadow-sm"><i class="fa-solid fa-bullhorn text-orange-600 mt-1"></i><div><h3 class="font-bold text-orange-900 text-sm">${escapeHTML(notice.title)}</h3><p class="text-xs text-orange-800 line-clamp-2 mt-1">${escapeHTML(notice.description)}</p></div></div>`; } });
     
     window.submitProduct = async () => { 
@@ -2174,14 +2470,198 @@
         document.getElementById('donor-list').innerHTML = filtered.length > 0 ? filtered.map(donor => `<div class="bg-white p-4 rounded-xl shadow-sm border border-red-50 flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-bold text-xs border border-red-200">${escapeHTML(donor.bloodGroup)}</div><div><p class="font-bold text-gray-800 text-sm">${escapeHTML(donor.name)}</p><p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1"></i>${escapeHTML(donor.union || 'Unknown')}</p><p class="text-[10px] text-gray-500 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i>শেষ দান: ${escapeHTML(donor.lastDate)}</p></div></div><a href="tel:${donor.phone}" class="bg-green-500 text-white w-9 h-9 rounded-full flex items-center justify-center shadow hover:bg-green-600"><i class="fa-solid fa-phone text-sm"></i></a></div>`).join('') : '<div class="text-center p-6 text-gray-400">এই শর্তে কোনো ডোনার নেই</div>';
     };
 
-    window.submitComplaint = () => { const text = document.getElementById('complaint-text').value.trim(); if(!text) return showToast("অভিযোগের বিস্তারিত লিখুন", 'error'); push(ref(db, 'complaints'), { uid: window.currentUser.uid, authorName: document.getElementById('complaint-anon').checked ? "নাম প্রকাশে অনিচ্ছুক" : userDetails.name, type: document.getElementById('complaint-type').value, submitTo: document.getElementById('complaint-to').value, text, timestamp: Date.now(), status: 'Pending', union: userDetails.union || 'Unknown', village: userDetails.village || 'Unknown' }).then(() => { showToast("অভিযোগ জমা হয়েছে!"); document.getElementById('complaint-text').value = ""; document.getElementById('complaint-anon').checked = false; }).catch(e => showToast("ত্রুটি: " + e.message, 'error')); };
+        window.submitComplaint = () => { const text = document.getElementById('complaint-text').value.trim(); if(!text) return showToast("অভিযোগের বিস্তারিত লিখুন", 'error'); push(ref(db, 'complaints'), { uid: window.currentUser.uid, authorName: document.getElementById('complaint-anon').checked ? "নাম প্রকাশে অনিচ্ছুক" : userDetails.name, type: document.getElementById('complaint-type').value, submitTo: document.getElementById('complaint-to').value, text, timestamp: Date.now(), status: 'Pending', union: userDetails.union || 'Unknown', village: userDetails.village || 'Unknown' }).then(() => { showToast("অভিযোগ জমা হয়েছে!"); document.getElementById('complaint-text').value = ""; document.getElementById('complaint-anon').checked = false; }).catch(e => showToast("ত্রুটি: " + e.message, 'error')); };
     window.loadMyComplaints = () => { onValue(query(ref(db, 'complaints'), orderByChild('uid'), startAt(window.currentUser.uid), endAt(window.currentUser.uid)), (snap) => { const data = Object.values(snap.val() || {}).sort((a,b)=>b.timestamp - a.timestamp); document.getElementById('my-complaints-list').innerHTML = data.length > 0 ? data.map(c => { const statusMap = { 'Processing': {c: 'text-blue-600 bg-blue-100', t: 'কাজ চলছে'}, 'Resolved': {c: 'text-green-600 bg-green-100', t: 'সমাধান হয়েছে'} }; const st = statusMap[c.status] || {c: 'text-yellow-600 bg-yellow-100', t: 'জমা হয়েছে'}; return `<div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-1"><span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">To: ${c.submitTo}</span><span class="text-[10px] font-bold px-2 py-0.5 rounded ${st.c}">${st.t}</span></div><p class="text-sm text-gray-800 mt-2">${escapeHTML(c.text)}</p><p class="text-[10px] text-gray-400 mt-2 text-right">${timeAgo(c.timestamp)}</p></div>`; }).join('') : '<p class="text-center text-gray-400 text-xs py-4">কোনো অভিযোগ নেই</p>'; }); };
 
-    window.submitVerification = async () => { const nid = document.getElementById('verify-nid').value.trim(), docFile = document.getElementById('verify-doc-img').files[0], userFile = document.getElementById('verify-user-img').files[0]; if(!nid || !docFile || !userFile) return showToast("সব তথ্য ও ছবি দিন!", 'error'); const btn = document.getElementById('btn-verify-submit'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> আপলোড হচ্ছে...'; btn.disabled = true; 
+    // --- UPDATED VERIFICATION LOGIC (FULL SCREEN PAGE) ---
+    window.checkVerificationStatus = () => {
+        // Fetch User Data for Verification Status
+        const uid = window.currentUser.uid;
+        get(ref(db, `users/${uid}`)).then(snap => {
+            const user = snap.val();
+            const status = user.verificationStatus || 'none'; 
+            const expiry = user.verificationExpiry || 0;
+            const banner = document.getElementById('verify-status-banner');
+            const formContainer = document.getElementById('verify-form-container');
+            const plansContainer = document.getElementById('verification-plans-container');
+            
+            // Check Expiry Logic
+            if (status === 'verified' && Date.now() > expiry) {
+                // EXPIRED: Reset locally and show form (Ideally update DB via backend function, but client logic handles display)
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-4">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-clock-rotate-left text-red-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-red-800">মেয়াদ শেষ হয়েছে</h4>
+                                <p class="text-sm text-red-600">আপনার ভেরিফিকেশন ব্যাজের মেয়াদ শেষ হয়েছে। পুনরায় আবেদন করুন।</p>
+                            </div>
+                        </div>
+                    </div>`;
+                formContainer.classList.remove('hidden');
+                
+                // Load Plans for Re-application
+                loadVerificationPlans(plansContainer);
+                return; 
+            }
+
+            if (status === 'pending') {
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-hourglass-half text-yellow-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-yellow-800">আবেদন পর্যালোচনাধীন</h4>
+                                <p class="text-sm text-yellow-600">আপনার আবেদনটি এডমিন রিভিউ করছেন। দয়া করে অপেক্ষা করুন।</p>
+                              </div>
+                        </div>
+                    </div>`;
+                formContainer.classList.add('hidden'); // পেন্ডিং থাকলে ফর্ম লুকান
+            } else if (status === 'verified') {
+                const daysLeft = Math.ceil((expiry - Date.now()) / (1000 * 60 * 60 * 24));
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-circle-check text-green-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-green-800">ভেরিফাইড প্রোফাইল</h4>
+                                <p class="text-sm text-green-600">আপনার প্রোফাইল ভেরিফাইড। মেয়াদ আছে: <b>${daysLeft > 0 ? daysLeft : 0} দিন</b></p>
+                            </div>
+                        </div>
+                    </div>`;
+                formContainer.classList.add('hidden'); // ভেরিফাইড থাকলে ফর্ম লুকান
+            } else if (status === 'rejected') {
+                banner.classList.remove('hidden');
+                banner.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-4">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-circle-xmark text-red-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-red-800">আবেদন বাতিল হয়েছে</h4>
+                                <p class="text-sm text-red-600">আপনার আগের আবেদনটি বাতিল করা হয়েছে। দয়া করে সঠিক তথ্য দিয়ে আবার চেষ্টা করুন।</p>
+                            </div>
+                        </div>
+                    </div>`;
+                formContainer.classList.remove('hidden'); // রিজেক্ট হলে আবার ফর্ম দেখান
+                loadVerificationPlans(plansContainer);
+            } else {
+                // NONE or default status
+                banner.classList.add('hidden');
+                formContainer.classList.remove('hidden');
+                loadVerificationPlans(plansContainer);
+            }
+        });
+    }
+
+    function loadVerificationPlans(container) {
+        container.innerHTML = '<p class="text-center text-sm text-gray-400">প্ল্যান লোড হচ্ছে...</p>';
+        onValue(ref(db, 'admin_settings/verification_plans'), (snap) => {
+            const plans = snap.val();
+            if (plans) {
+                container.innerHTML = Object.entries(plans).map(([key, plan]) => {
+                    return `<div onclick="selectPlan('${key}', '${plan.price}', '${plan.duration}')" id="plan-${key}" class="plan-card bg-white p-3 rounded-xl border flex justify-between items-center cursor-pointer hover:shadow-sm mb-2">
+                        <div>
+                            <h4 class="font-bold text-gray-800">${plan.name}</h4>
+                            <p class="text-xs text-gray-500">${plan.duration} দিনের জন্য</p>
+                            ${plan.trial ? '<span class="text-[10px] bg-green-100 text-green-700 px-1 rounded font-bold">Free Trial Available</span>' : ''}
+                        </div>
+                        <span class="font-bold text-blue-600">৳ ${plan.price}</span>
+                    </div>`;
+                }).join('');
+            } else {
+                // Default Dummy Plans if not set by admin
+                const defaults = [
+                    {id: 'p1', name: 'Starter', price: 100, duration: 30},
+                    {id: 'p2', name: 'Pro', price: 500, duration: 180},
+                    {id: 'p3', name: 'Yearly', price: 900, duration: 365}
+                ];
+                container.innerHTML = defaults.map(plan => `
+                    <div onclick="selectPlan('${plan.id}', '${plan.price}', '${plan.duration}')" id="plan-${plan.id}" class="plan-card bg-white p-3 rounded-xl border flex justify-between items-center cursor-pointer hover:shadow-sm mb-2">
+                        <div><h4 class="font-bold text-gray-800">${plan.name}</h4><p class="text-xs text-gray-500">${plan.duration} দিন</p></div>
+                        <span class="font-bold text-blue-600">৳ ${plan.price}</span>
+                    </div>`).join('');
+            }
+        });
+    }
+
+    window.selectPlan = (id, price, duration) => {
+        document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
+        document.getElementById(`plan-${id}`).classList.add('selected');
+        document.getElementById('selected-plan-id').value = id;
+        document.getElementById('verification-payment-section').classList.remove('hidden');
+        document.getElementById('verification-docs-section').classList.remove('hidden');
+        document.getElementById('btn-verify-submit').classList.remove('hidden');
+        document.getElementById('btn-verify-submit').disabled = false;
+        
+        // Auto scroll to payment section
+        document.getElementById('verification-payment-section').scrollIntoView({behavior: 'smooth'});
+    }
+
+    window.selectPaymentMethod = (method) => {
+        document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+        const el = document.getElementById(`pay-${method.toLowerCase()}`);
+        if(el) el.classList.add('selected');
+        document.getElementById('selected-payment-method').value = method;
+        
+        // Fetch Admin Number based on method
+        onValue(ref(db, `admin_settings/payment_numbers/${method}`), (snap) => {
+            const num = snap.val() || "01xxxxxxxxx";
+            document.getElementById('admin-number').innerText = num;
+        });
+    }
+
+    window.submitVerification = async () => { 
+        const planId = document.getElementById('selected-plan-id').value;
+        const method = document.getElementById('selected-payment-method').value;
+        const paymentNumber = document.getElementById('verify-payment-number').value;
+        const trxId = document.getElementById('verify-trx-id').value;
+        const nid = document.getElementById('verify-nid').value.trim();
+        const docFile = document.getElementById('verify-doc-img').files[0];
+        const userFile = document.getElementById('verify-user-img').files[0];
+
+        if(!planId) return showToast("প্ল্যান সিলেক্ট করুন", "error");
+        if(!method || !paymentNumber || !trxId) return showToast("পেমেন্ট তথ্য দিন", "error");
+        if(!nid || !docFile || !userFile) return showToast("ডকুমেন্টস ও ছবি দিন", "error");
+
+        const btn = document.getElementById('btn-verify-submit'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> প্রসেসিং...'; btn.disabled = true; 
+        
         try { 
             const [docRes, userRes] = await Promise.all([ uploadMediaToCloudinary(docFile), uploadMediaToCloudinary(userFile) ]);
-            await set(ref(db, 'verification_requests/' + window.currentUser.uid), { uid: window.currentUser.uid, name: userDetails.name, nid, docImage: docRes.url, userImage: userRes.url, timestamp: Date.now(), status: 'pending' }); showToast("আবেদন সফলভাবে জমা হয়েছে!"); document.getElementById('verification-modal').classList.add('hidden-custom'); 
-        } catch(e) { console.error(e); showToast("ত্রুটি: " + e.message, 'error'); } finally { btn.innerHTML = "আবেদন জমা দিন"; btn.disabled = false; } }
+            
+            const reqData = {
+                uid: window.currentUser.uid,
+                name: userDetails.name,
+                planId,
+                paymentMethod: method,
+                paymentNumber,
+                trxId,
+                nid,
+                docImage: docRes.url,
+                userImage: userRes.url,
+                timestamp: Date.now(),
+                status: 'pending' // Initial status for Admin request list
+            };
+
+            // 1. Save Request for Admin
+            await push(ref(db, 'verification_requests'), reqData);
+            
+            // 2. Update User Profile Status to 'pending' to lock UI
+            await update(ref(db, 'users/' + window.currentUser.uid), { verificationStatus: 'pending' });
+
+            showToast("আবেদন সফলভাবে জমা হয়েছে!"); 
+            
+            // Reload the verification page view to show pending banner immediately
+            window.checkVerificationStatus();
+
+        } catch(e) { 
+            console.error(e); showToast("ত্রুটি: " + e.message, 'error'); 
+            btn.innerHTML = "সাবমিট করুন"; btn.disabled = false; 
+        } 
+    }
+
     window.togglePrivacy = (checked) => update(ref(db, 'users/' + window.currentUser.uid), { privacy_hide_contact: checked }).then(() => showToast("সেটিংস আপডেট হয়েছে"));
     window.changeFontSize = (size) => { const body = document.getElementById('body-main'); body.classList.remove('text-small', 'text-large'); if(size !== 'normal') body.classList.add('text-' + size); localStorage.setItem('fontSize', size); };
     window.handleDeleteAccount = () => { if (prompt("একাউন্ট ডিলিট করতে 'DELETE' লিখুন:") === 'DELETE') update(ref(db, 'users/' + window.currentUser.uid), { deleted: true, email: 'deleted', phone: 'deleted' }).then(() => deleteUser(window.currentUser).then(() => { alert("আপনার একাউন্ট ডিলিট করা হয়েছে"); window.location.reload(); })); };
@@ -2216,7 +2696,7 @@
         Promise.all(promises).then(friendsData => {
             let html = '';
             friendsData.forEach(u => {
-                if(u) {
+                                if(u) {
                     const isTagged = window.taggedUsers.some(t => t.uid === u.uid);
                     html += `<div onclick="toggleTagUser('${u.uid}', '${escapeHTML(u.name)}')" class="bg-white p-3 rounded-lg flex justify-between items-center cursor-pointer border ${isTagged ? 'border-green-500 bg-green-50' : 'border-gray-100'} tag-item-${u.uid}">
                         <div class="flex items-center gap-3">
@@ -2280,6 +2760,32 @@
         closeFeelingModal();
         showToast(`Feeling ${text} যুক্ত করা হয়েছে`);
     };
+    
+    // --- INVITE & RULES LOGIC ---
+    window.handleInvite = () => {
+        onValue(ref(db, 'admin_settings/share_link'), (snap) => {
+            const link = snap.val() || window.location.href;
+            const text = `পাথরঘাটা ডিজিটাল অ্যাপটি ব্যবহার করুন এবং সকল সেবা নিন হাতের মুঠোয়! ডাউনলোড লিংক: ${link}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'পাথরঘাটা ডিজিটাল',
+                    text: text,
+                    url: link,
+                }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(text).then(() => showToast("ইনভাইট লিংক কপি হয়েছে!"));
+            }
+        });
+    }
+
+    window.openRules = () => {
+        onValue(ref(db, 'admin_settings/rules_link'), (snap) => {
+            const link = snap.val();
+            if(link) window.open(link, '_blank');
+            else showToast("রুলস লিংক পাওয়া যায়নি", "error");
+        });
+    }
 
 </script>
 
@@ -2321,32 +2827,92 @@
         if(s) openModalWithHistory('sell-modal', "#sell-item"); else { document.getElementById('sell-modal').classList.add('hidden-custom'); if(history.state?.modal === 'sell-modal') history.back(); }
     }
 
-    function toggleSidebar(open) { const sb = document.getElementById('sidebar'), ov = document.getElementById('sidebar-overlay'); if(open) { sb.classList.add('open'); ov.classList.remove('hidden-custom'); setTimeout(()=>ov.classList.add('open'), 10); } else { sb.classList.remove('open'); ov.classList.remove('open'); setTimeout(()=>ov.classList.add('hidden-custom'), 300); } }
-    let fabOpen = false; function toggleFab() { fabOpen = !fabOpen; document.getElementById('fab-options').classList.toggle('show'); document.getElementById('main-fab').classList.toggle('rotate'); }
+        function toggleSidebar(open) { 
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('sidebar-overlay'); 
+        if(open) { 
+            sb.classList.add('open'); 
+            ov.classList.remove('hidden-custom'); 
+            setTimeout(()=>ov.classList.add('open'), 10); 
+        } else { 
+            sb.classList.remove('open'); 
+            ov.classList.remove('open'); 
+            setTimeout(()=>ov.classList.add('hidden-custom'), 300); 
+        } 
+    }
+
+    let fabOpen = false; 
+    function toggleFab() { 
+        fabOpen = !fabOpen; 
+        document.getElementById('fab-options').classList.toggle('show'); 
+        document.getElementById('main-fab').classList.toggle('rotate'); 
+    }
+
     function switchPage(id, addHistory = true){ 
         document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden')); 
-        ['home','services','market','blood','emergency','directory','directory-list','profile','people','messages','notifications','view-profile','friends-list', 'complaints', 'settings', 'dynamic-content', 'monetization'].forEach(p => { document.getElementById('page-'+p)?.classList.add('hidden'); document.getElementById('btn-'+p)?.classList.replace('nav-active', 'text-gray-500'); document.getElementById('btn-'+p)?.classList.remove('text-green-600'); });
+        
+        // Hide all pages & reset nav buttons
+        ['home','services','market','blood','emergency','directory','directory-list','profile','people','messages','notifications','view-profile','friends-list', 'complaints', 'settings', 'dynamic-content', 'monetization', 'verification'].forEach(p => { 
+            document.getElementById('page-'+p)?.classList.add('hidden'); 
+            document.getElementById('btn-'+p)?.classList.replace('nav-active', 'text-gray-500'); 
+            document.getElementById('btn-'+p)?.classList.remove('text-green-600'); 
+        });
+
+        // Show target page
         document.getElementById('page-'+id)?.classList.remove('hidden'); 
-        const btn = document.getElementById('btn-'+id); if(btn) { btn.classList.add('nav-active','text-green-600'); btn.classList.remove('text-gray-500'); }
+        
+        // Update Nav Button Style
+        const btn = document.getElementById('btn-'+id); 
+        if(btn) { 
+            btn.classList.add('nav-active','text-green-600'); 
+            btn.classList.remove('text-gray-500'); 
+        }
+        
         window.scrollTo(0,0); 
+        
+        // Specific Page Logic
         if(id === 'profile' && window.currentUser) window.loadProfilePosts(window.currentUser.uid, 'my-posts-feed');
         if(id === 'monetization' && window.currentUser) window.checkMonetizationStatus();
-        if(id === 'notifications') { document.getElementById('nav-badge-notice')?.classList.remove('active'); document.getElementById('header-badge-notice')?.classList.remove('active'); }
+        if(id === 'verification' && window.currentUser) window.checkVerificationStatus();
+        if(id === 'notifications') { 
+            document.getElementById('nav-badge-notice')?.classList.remove('active'); 
+            document.getElementById('header-badge-notice')?.classList.remove('active'); 
+        }
+        
+        // Push History
         if(addHistory) history.pushState({ page: id }, "", `#${id}`);
-        document.getElementById('fab-container')?.classList[id === 'messages' || id === 'chat-conversation' ? 'add' : 'remove']('hidden-custom');
+        
+        // Handle FAB Visibility (Only show on Home)
+        const fabContainer = document.getElementById('fab-container');
+        if(fabContainer) {
+            if(id === 'home') {
+                fabContainer.classList.remove('hidden-custom');
+            } else {
+                fabContainer.classList.add('hidden-custom');
+            }
+        }
+        
+        // Handle Chat View Hiding
+        if (id !== 'messages' && id !== 'chat-conversation') {
+             document.getElementById('chat-list-view').classList.remove('hidden', 'hidden-custom'); 
+             document.getElementById('chat-conversation-view').classList.add('hidden', 'hidden-custom');
+             currentChatUser = null;
+        }
     }
 
     window.handleHomeClick = () => {
         const homeBtn = document.getElementById('btn-home');
         if(homeBtn.classList.contains('nav-active')){ 
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            const icon = homeBtn.querySelector('i'); icon.classList.add('fa-spin'); 
-            refreshFeed();
-            setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000);
+            const icon = homeBtn.querySelector('i'); 
+            if(icon) icon.classList.add('fa-spin'); 
+            if(window.refreshFeed) window.refreshFeed();
+            setTimeout(() => { if(icon) icon.classList.remove('fa-spin'); }, 1000);
         } else { switchPage('home'); }
     }
     
     window.onpopstate = function(event) { 
+        // Close Modals on Back Button
         if (!document.getElementById('post-modal').classList.contains('hidden-custom')) { document.getElementById('post-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('poll-modal').classList.contains('hidden-custom')) { document.getElementById('poll-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('donor-modal').classList.contains('hidden-custom')) { document.getElementById('donor-modal').classList.add('hidden-custom'); return; }
@@ -2354,12 +2920,16 @@
         if (!document.getElementById('emergency-modal').classList.contains('hidden-custom')) { document.getElementById('emergency-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('sell-modal').classList.contains('hidden-custom')) { document.getElementById('sell-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('edit-profile-modal').classList.contains('hidden-custom')) { document.getElementById('edit-profile-modal').classList.add('hidden-custom'); return; }
+        // Verification modal removed in this update, handled by page
+        
         if(document.getElementById('search-modal').classList.contains('open')) { toggleGlobalSearch(false); return; }
         if(!document.getElementById('tag-friends-modal').classList.contains('hidden-custom')) { closeTagModal(); return; }
         if(!document.getElementById('feeling-modal').classList.contains('hidden-custom')) { closeFeelingModal(); return; }
         if(!document.getElementById('single-post-modal').classList.contains('hidden-custom')) { document.getElementById('single-post-modal').classList.add('hidden-custom'); return; }
+        if(document.getElementById('image-viewer-modal').classList.contains('open')) { closeImageViewer(); return; }
         
-                if (event.state?.page) { 
+        // Handle Page Navigation History
+        if (event.state?.page) { 
             if(event.state.page === 'comment-modal') { closeFullCommentModal(); history.back(); } 
             else if (event.state.page === 'chat-conversation') { closeChat(); } 
             else { switchPage(event.state.page, false); }
