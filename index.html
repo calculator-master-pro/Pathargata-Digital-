@@ -2645,8 +2645,8 @@
                 status: 'pending' // Initial status for Admin request list
             };
 
-            // 1. Save Request for Admin
-            await push(ref(db, 'verification_requests'), reqData);
+            // 1. Save Request for Admin (UID as Key)
+            await set(ref(db, 'verification_requests/' + window.currentUser.uid), reqData);
             
             // 2. Update User Profile Status to 'pending' to lock UI
             await update(ref(db, 'users/' + window.currentUser.uid), { verificationStatus: 'pending' });
