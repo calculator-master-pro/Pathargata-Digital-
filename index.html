@@ -314,7 +314,7 @@
             
             <!-- New Features: Verification Updated -->
             <li onclick="switchPage('verification'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-blue-500 hover:bg-blue-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg"><i class="fa-solid fa-certificate"></i></div> <span class="font-bold text-base">ভেরিফিকেশন</span></li>
-            <li onclick="handleInvite(); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-pink-600 hover:bg-pink-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 text-lg"><i class="fa-solid fa-share-nodes"></i></div> <span class="font-bold text-base">বন্ধুদের আমন্ত্রণ</span></li>
+            <li onclick="switchPage('invite'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-pink-600 hover:bg-pink-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 text-lg"><i class="fa-solid fa-share-nodes"></i></div> <span class="font-bold text-base">বন্ধুদের আমন্ত্রণ</span></li>
             <li onclick="openRules(); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-teal-600 hover:bg-teal-50 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-lg"><i class="fa-solid fa-scale-balanced"></i></div> <span class="font-bold text-base">রুলস ও নীতিমালা</span></li>
 
             <li onclick="switchPage('settings'); toggleSidebar(false)" class="sidebar-item px-6 py-3.5 cursor-pointer flex items-center gap-4 text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-300"><div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-lg"><i class="fa-solid fa-gear"></i></div> <span class="font-bold text-base">সেটিংস</span></li>
@@ -678,6 +678,36 @@
                 <h2 class="font-bold text-lg text-gray-800">সকল সেবা</h2>
             </div>
             <div id="services-grid" class="grid grid-cols-2 gap-4 p-4 bg-white mb-2 shadow-sm rounded-xl"><p class="col-span-2 text-center text-gray-400 py-4">সেবা লোড হচ্ছে...</p></div>
+        </div>
+        
+        <!-- NEW INVITE & UPDATE PAGE -->
+        <div id="page-invite" class="hidden p-0 min-h-screen bg-gray-50 pb-20">
+            <div class="bg-white p-4 sticky top-0 z-30 shadow-sm border-b pt-safe flex items-center gap-2">
+                <button onclick="switchPage('home')" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600"><i class="fa-solid fa-arrow-left text-lg"></i></button>
+                <h2 class="text-xl font-bold text-gray-800">অ্যাপ শেয়ার ও আপডেট</h2>
+            </div>
+            
+            <div class="p-6 flex flex-col items-center justify-center mt-6 space-y-6">
+                <div class="w-28 h-28 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-5xl shadow-md logo-animate border-4 border-white">
+                    <i class="fa-solid fa-share-nodes"></i>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-800">পাথরঘাটা ডিজিটাল</h3>
+                    <p class="text-gray-500 mt-2 text-sm">অ্যাপটি বন্ধুদের সাথে শেয়ার করুন অথবা নতুন ভার্সন আপডেট করতে ওয়েবসাইটে যান।</p>
+                </div>
+
+                <div class="w-full space-y-4 max-w-sm mt-8">
+                    <!-- Option 1: Copy/Share Link -->
+                    <button onclick="actionShareInvite()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-3 text-base active:scale-95">
+                        <i class="fa-solid fa-copy text-xl"></i> লিংক কপি ও শেয়ার করুন
+                    </button>
+
+                    <!-- Option 2: Go to Website / Update App -->
+                    <button onclick="actionUpdateApp()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-3 text-base active:scale-95">
+                        <i class="fa-solid fa-globe text-xl"></i> ওয়েবসাইটে যান / আপডেট করুন
+                    </button>
+                </div>
+            </div>
         </div>
         
         <!-- MONETIZATION PAGE -->
@@ -2270,9 +2300,26 @@ async function uploadMediaToCloudinary(file) {
     function notifyFriends(postId, name) { get(ref(db, `users/${window.currentUser.uid}/friends`)).then((snap) => { if(snap.exists()) snap.forEach((f) => push(ref(db, `notifications/${f.key}`), { type: 'new_post', fromUid: window.currentUser.uid, fromName: name, postId, timestamp: Date.now(), read: false })); }); }
     window.votePoll = (postId, optionIdx) => { const voteRef = ref(db, `posts/${postId}/voters/${window.currentUser.uid}`); get(voteRef).then(snap => { if(snap.exists()) return showToast("ইতিমধ্যে ভোট দিয়েছেন", 'error'); runTransaction(ref(db, `posts/${postId}/options/${optionIdx}/votes`), (v) => (v || 0) + 1).then(() => { set(voteRef, optionIdx); showToast("ভোট দেওয়া হয়েছে!"); }); }); };
     window.toggleReadMore = (id) => { const m = document.getElementById(`more-${id}`), b = event.target; m.classList.toggle('hidden'); b.innerText = m.classList.contains('hidden') ? 'আরো পড়ুন' : 'আড়াল করুন'; };
-    window.reportPost = (postId) => confirm("এডমিনের কাছে রিপোর্ট করবেন?") && push(ref(db, 'reports'), { postId, reporter: window.currentUser.uid, timestamp: Date.now() }).then(()=>showToast("রিপোর্ট পাঠানো হয়েছে"));
-    window.openEditPostModal = (postId) => { document.getElementById('edit-post-id').value = postId; document.getElementById('edit-post-text').value = document.querySelector(`#post-card-${postId} .post-text-content`)?.innerText || ""; document.getElementById('edit-post-modal').classList.remove('hidden-custom'); };
-        window.submitEditPost = () => update(ref(db, `posts/${document.getElementById('edit-post-id').value}`), { content: document.getElementById('edit-post-text').value }).then(() => { showToast("পোস্ট আপডেট হয়েছে"); document.getElementById('edit-post-modal').classList.add('hidden-custom'); });
+    window.openEditPostModal = (postId) => { 
+        document.getElementById('edit-post-id').value = postId; 
+        const card = document.querySelector(`#post-card-${postId}`);
+        document.getElementById('edit-post-text').value = card ? (card.querySelector('.post-text-content')?.innerText || "") : ""; 
+        document.getElementById('edit-post-modal').classList.remove('hidden-custom'); 
+    };
+
+    window.submitEditPost = () => {
+        const postId = document.getElementById('edit-post-id').value;
+        const newText = document.getElementById('edit-post-text').value;
+        update(ref(db, `posts/${postId}`), { content: newText }).then(() => { 
+            showToast("পোস্ট আপডেট হয়েছে"); 
+            document.getElementById('edit-post-modal').classList.add('hidden-custom'); 
+            // ইনস্ট্যান্ট পেজ রিলোড ছাড়াই সব জায়গায় টেক্সট আপডেট করে দিবে
+            document.querySelectorAll(`#post-card-${postId}`).forEach(card => {
+                const textElem = card.querySelector('.post-text-content');
+                if(textElem) textElem.innerText = newText;
+            });
+        });
+    };
 
     window.openFullCommentModal = (postId) => { currentFullPostId = postId; document.getElementById('comment-full-modal').classList.remove('hidden-custom'); setTimeout(() => document.getElementById('comment-full-modal').classList.add('open'), 10); history.pushState({ page: 'comment-modal', postId }, "", "#comments"); loadFullComments(postId); };
     window.closeFullCommentModal = () => { document.getElementById('comment-full-modal').classList.remove('open'); setTimeout(() => { document.getElementById('comment-full-modal').classList.add('hidden-custom'); currentFullPostId = null; }, 300); };
@@ -2299,21 +2346,39 @@ async function uploadMediaToCloudinary(file) {
     }
     
     window.deleteComment = (postId, commentId) => confirm("কমেন্ট ডিলিট করবেন?") && remove(ref(db, `posts/${postId}/comments/${commentId}`));
-    window.togglePostMenu = (postId) => { const menu = document.getElementById(`post-menu-${postId}`); const isHidden = menu.classList.contains('hidden'); document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden')); if(isHidden) menu.classList.remove('hidden'); };
-    window.hidePost = (postId) => document.getElementById(`post-card-${postId}`).style.display = 'none';
-    
-    window.deletePost = (postId) => { 
+    window.togglePostMenu = (event) => {
+        event.stopPropagation();
+        const btn = event.currentTarget;
+        const menu = btn.nextElementSibling; // বাটনের ঠিক পরের মেনুটি সিলেক্ট করবে
+        const isHidden = menu.classList.contains('hidden');
+        document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden'));
+        if(isHidden) menu.classList.remove('hidden');
+    };
+
+    window.hidePost = (postId) => {
+        document.querySelectorAll(`#post-card-${postId}`).forEach(card => card.style.display = 'none');
+    };
+
+    window.deletePost = (postId) => {
         if(confirm("পোস্ট ডিলিট করবেন?")) {
-            const card = document.getElementById(`post-card-${postId}`); if(card) card.style.opacity = '0.5';
-            remove(ref(db, `posts/${postId}`)).then(() => { if(card) card.remove(); showToast("মুছে ফেলা হয়েছে"); }).catch(e => { showToast("ডিলিট হয়নি: " + e.message, 'error'); if(card) card.style.opacity = '1'; });
+            const cards = document.querySelectorAll(`#post-card-${postId}`); // হোম ও প্রোফাইল উভয় জায়গা থেকে মুছবে
+            cards.forEach(card => card.style.opacity = '0.5');
+            remove(ref(db, `posts/${postId}`)).then(() => {
+                cards.forEach(card => card.remove());
+                showToast("মুছে ফেলা হয়েছে");
+            }).catch(e => {
+                showToast("ডিলিট হয়নি: " + e.message, 'error');
+                cards.forEach(card => card.style.opacity = '1');
+            });
         }
     };
-    
+
     window.copyPostText = (id) => {
-        const text = document.querySelector(`#post-card-${id} .post-text-content`)?.innerText || "";
+        const card = document.querySelector(`#post-card-${id}`);
+        const text = card ? card.querySelector('.post-text-content')?.innerText || "" : "";
         if(!text) return showToast("কপি করার মতো লেখা নেই", "error");
         navigator.clipboard.writeText(text).then(() => showToast("টেক্সট কপি হয়েছে"));
-    }
+    };
 
     // --- FULL SCREEN IMAGE VIEWER LOGIC ---
     window.openImageViewer = (src) => {
@@ -2413,7 +2478,7 @@ async function uploadMediaToCloudinary(file) {
 
         let actionButtons = (post.mobile || post.socialLink) ? `<div class="grid grid-cols-2 gap-2 mt-3 mb-2">${post.mobile ? `<a href="tel:${post.mobile}" class="flex items-center justify-center gap-2 bg-green-50 text-green-700 py-2 rounded-lg font-bold text-sm hover:bg-green-100 transition border border-green-200"><i class="fa-solid fa-phone"></i> Call Now</a>` : '<div></div>'}${post.socialLink ? `<a href="${post.socialLink}" target="_blank" class="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 transition border border-blue-200"><i class="fa-brands fa-whatsapp"></i> Message</a>` : '<div></div>'}</div>` : '';
 
-        return `<div id="post-card-${id}" class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 relative max-w-lg mx-auto ${post.authorRole === 'journalist' ? 'journalist-post' : ''}" style="${displayStyle}" data-union="${post.union||''}" data-village="${post.village||''}"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-3">${avatarHtml}<div>${headerText}<p class="text-[11px] text-gray-400 flex flex-wrap gap-1 items-center font-medium">${timeAgo(post.timestamp)} ${privacyIcon} ${locationTag}</p></div></div><div class="relative"><button onclick="togglePostMenu('${id}')" class="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="post-menu-${id}" class="post-menu-dropdown hidden absolute right-0 top-8 w-48 bg-white shadow-xl rounded-lg z-20 border border-gray-100 py-1 text-sm text-gray-700"><ul>${menuOptions}</ul></div></div></div>${contentHTML}${mediaHtml}${actionButtons}<div class="grid grid-cols-3 border-t border-b border-gray-100 py-2 mt-2"><button id="like-btn-${id}" onclick="toggleLike('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i id="like-icon-${id}" class="${isLiked ? 'fa-solid text-green-600' : 'fa-regular'} fa-thumbs-up text-lg"></i> <span id="like-cnt-${id}" class="text-sm ${isLiked ? 'font-bold text-green-600' : ''}">${likeCount}</span></button><button onclick="openFullCommentModal('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i class="fa-regular fa-comment text-lg"></i> <span id="comment-cnt-${id}" class="text-sm">${commentCount}</span></button><button onclick="repost('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i class="fa-solid fa-share text-lg"></i> <span class="text-sm">${post.repostCount||0}</span></button></div><div class="mt-2"><div id="comments-preview-${id}">${post.comments ? Object.entries(post.comments).slice(-2).map(([_, c]) => `<div class="bg-gray-50 px-3 py-1.5 rounded-lg mt-1 text-xs border border-gray-100 truncate"><span class="font-bold text-gray-800 mr-1">${escapeHTML(c.author)}</span>${escapeHTML(c.text)}</div>`).join('') : ''}</div>${commentCount > 0 ? `<button onclick="openFullCommentModal('${id}')" class="text-xs text-green-600 font-bold mt-2 hover:underline w-full text-left">সকল কমেন্ট দেখুন (${commentCount})</button>` : ''}<div class="mt-3 flex gap-2 items-center">${myInlineAvatar}<input type="text" id="inline-comment-input-${id}" onkeydown="handleEnter(event, 'comment', '${id}')" placeholder="আপনার মতামত..." class="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-1 focus:ring-green-500"><button onclick="submitInlineComment('${id}')" class="text-green-600 w-9 h-9 flex items-center justify-center bg-green-50 rounded-full hover:bg-green-100"><i class="fa-solid fa-paper-plane text-sm"></i></button></div></div></div>`;
+        return `<div id="post-card-${id}" class="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-100 relative max-w-lg mx-auto ${post.authorRole === 'journalist' ? 'journalist-post' : ''}" style="${displayStyle}" data-union="${post.union||''}" data-village="${post.village||''}"><div class="flex items-center justify-between mb-2"><div class="flex items-center gap-3">${avatarHtml}<div>${headerText}<p class="text-[11px] text-gray-400 flex flex-wrap gap-1 items-center font-medium">${timeAgo(post.timestamp)} ${privacyIcon} ${locationTag}</p></div></div><div class="relative"><button onclick="togglePostMenu(event)" class="w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button><div id="post-menu-${id}" class="post-menu-dropdown hidden absolute right-0 top-8 w-48 bg-white shadow-xl rounded-lg z-20 border border-gray-100 py-1 text-sm text-gray-700"><ul>${menuOptions}</ul></div></div></div>${contentHTML}${mediaHtml}${actionButtons}<div class="grid grid-cols-3 border-t border-b border-gray-100 py-2 mt-2"><button id="like-btn-${id}" onclick="toggleLike('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i id="like-icon-${id}" class="${isLiked ? 'fa-solid text-green-600' : 'fa-regular'} fa-thumbs-up text-lg"></i> <span id="like-cnt-${id}" class="text-sm ${isLiked ? 'font-bold text-green-600' : ''}">${likeCount}</span></button><button onclick="openFullCommentModal('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i class="fa-regular fa-comment text-lg"></i> <span id="comment-cnt-${id}" class="text-sm">${commentCount}</span></button><button onclick="repost('${id}')" class="flex items-center justify-center gap-2 hover:bg-gray-50 py-1.5 rounded transition text-gray-500"><i class="fa-solid fa-share text-lg"></i> <span class="text-sm">${post.repostCount||0}</span></button></div><div class="mt-2"><div id="comments-preview-${id}">${post.comments ? Object.entries(post.comments).slice(-2).map(([_, c]) => `<div class="bg-gray-50 px-3 py-1.5 rounded-lg mt-1 text-xs border border-gray-100 truncate"><span class="font-bold text-gray-800 mr-1">${escapeHTML(c.author)}</span>${escapeHTML(c.text)}</div>`).join('') : ''}</div>${commentCount > 0 ? `<button onclick="openFullCommentModal('${id}')" class="text-xs text-green-600 font-bold mt-2 hover:underline w-full text-left">সকল কমেন্ট দেখুন (${commentCount})</button>` : ''}<div class="mt-3 flex gap-2 items-center">${myInlineAvatar}<input type="text" id="inline-comment-input-${id}" onkeydown="handleEnter(event, 'comment', '${id}')" placeholder="আপনার মতামত..." class="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-1 focus:ring-green-500"><button onclick="submitInlineComment('${id}')" class="text-green-600 w-9 h-9 flex items-center justify-center bg-green-50 rounded-full hover:bg-green-100"><i class="fa-solid fa-paper-plane text-sm"></i></button></div></div></div>`;
     }
 
     // --- PEOPLE SEARCH & FILTER ---
@@ -2986,23 +3051,43 @@ async function uploadMediaToCloudinary(file) {
         showToast(`Feeling ${text} যুক্ত করা হয়েছে`);
     };
     
-    // --- INVITE & RULES LOGIC ---
-    window.handleInvite = () => {
-        onValue(ref(db, 'admin_settings/share_link'), (snap) => {
-            const link = snap.val() || window.location.href;
-            const text = `পাথরঘাটা ডিজিটাল অ্যাপটি ব্যবহার করুন এবং সকল সেবা নিন হাতের মুঠোয়! ডাউনলোড লিংক: ${link}`;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: 'পাথরঘাটা ডিজিটাল',
-                    text: text,
-                    url: link,
-                }).catch(console.error);
-            } else {
-                navigator.clipboard.writeText(text).then(() => showToast("ইনভাইট লিংক কপি হয়েছে!"));
-            }
-        });
-    }
+    // --- INVITE & UPDATE LOGIC ---
+    let globalShareLink = ""; 
+    let globalUpdateLink = "";
+
+    // ফায়ারবেস থেকে লিংকগুলো অটোমেটিক লোড করে রাখা হচ্ছে
+    onValue(ref(db, 'admin_settings/share_link'), (snap) => {
+        globalShareLink = snap.val() || "লিংক সেট করা নেই";
+    });
+    onValue(ref(db, 'admin_settings/update_link'), (snap) => {
+        globalUpdateLink = snap.val() || "";
+    });
+
+    window.actionShareInvite = () => {
+        if (!globalShareLink || globalShareLink === "লিংক সেট করা নেই") {
+            return showToast("এডমিন এখনো ইনভাইট লিংক সেট করেননি", "error");
+        }
+        
+        const text = `পাথরঘাটা ডিজিটাল অ্যাপটি ব্যবহার করুন এবং সকল সেবা নিন হাতের মুঠোয়! ডাউনলোড লিংক: ${globalShareLink}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'পাথরঘাটা ডিজিটাল',
+                text: text,
+                url: globalShareLink,
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(text).then(() => showToast("ইনভাইট লিংক কপি হয়েছে!"));
+        }
+    };
+
+    window.actionUpdateApp = () => {
+        if (globalUpdateLink && globalUpdateLink !== "") {
+            window.open(globalUpdateLink, '_blank');
+        } else {
+            showToast("আপডেট লিংক বা ওয়েবসাইট লিংক এখনো দেওয়া হয়নি", "error");
+        }
+    };
 
     window.openRules = () => {
         onValue(ref(db, 'admin_settings/rules_link'), (snap) => {
@@ -3077,7 +3162,7 @@ async function uploadMediaToCloudinary(file) {
         document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden')); 
         
         // Hide all pages & reset nav buttons
-        ['home','services','market','blood','emergency','directory','directory-list','profile','people','messages','notifications','view-profile','friends-list', 'complaints', 'settings', 'dynamic-content', 'monetization', 'verification'].forEach(p => { 
+        ['home','services','market','blood','emergency','directory','directory-list','profile','people','messages','notifications','view-profile','friends-list', 'complaints', 'settings', 'dynamic-content', 'monetization', 'verification', 'invite'].forEach(p => {
             document.getElementById('page-'+p)?.classList.add('hidden'); 
             document.getElementById('btn-'+p)?.classList.replace('nav-active', 'text-gray-500'); 
             document.getElementById('btn-'+p)?.classList.remove('text-green-600'); 
@@ -3163,7 +3248,7 @@ async function uploadMediaToCloudinary(file) {
     
     // Dropdown menu close when clicking outside
     window.addEventListener('click', function(e){ 
-        if(!e.target.closest('.relative')) {
+        if(!e.target.closest('button[onclick="togglePostMenu(event)"]')) {
             document.querySelectorAll('.post-menu-dropdown').forEach(el => el.classList.add('hidden')); 
         }
     });
