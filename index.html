@@ -627,6 +627,76 @@
     </div>
 </div>
 
+<!-- ACCOUNT DETAILS MODAL -->
+<div id="account-details-modal" class="fixed inset-0 bg-black bg-opacity-80 z-[160] flex items-center justify-center hidden-custom p-4">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl relative">
+        <button onclick="closeAccountDetailsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">একাউন্ট ইনফরমেশন</h3>
+
+        <!-- বর্তমান তথ্য দেখানোর জায়গা (যেটা দিয়ে একাউন্ট খোলা হয়েছিল) -->
+        <div class="mb-5 bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <p class="text-[11px] font-bold text-gray-400 mb-1 uppercase">বর্তমান ইমেইল:</p>
+            <p id="current-display-email" class="font-bold text-gray-800 text-sm mb-3">...</p>
+            
+            <p class="text-[11px] font-bold text-gray-400 mb-1 uppercase">বর্তমান মোবাইল নাম্বার:</p>
+            <p id="current-display-phone" class="font-bold text-gray-800 text-sm">...</p>
+        </div>
+
+        <!-- 60 Days Info/Alert Box -->
+        <div id="account-update-info" class="bg-blue-50 text-blue-700 text-xs p-3 rounded-lg mb-4 border border-blue-100 leading-relaxed">
+            <i class="fa-solid fa-circle-info mr-1"></i> আপনি প্রতি <b>৬০ দিনে</b> মাত্র একবার তথ্য পরিবর্তন করতে পারবেন।
+        </div>
+
+        <!-- পরিবর্তন করার ইনপুট -->
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-gray-500 block mb-1">নতুন ইমেইল</label>
+                <input type="email" id="update-new-email" class="w-full bg-white border border-gray-200 p-2.5 rounded-lg text-sm focus:ring-1 focus:ring-green-500" placeholder="নতুন ইমেইল দিন">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 block mb-1">নতুন মোবাইল নাম্বার</label>
+                <input type="tel" id="update-new-phone" class="w-full bg-white border border-gray-200 p-2.5 rounded-lg text-sm focus:ring-1 focus:ring-green-500" placeholder="নতুন নাম্বার দিন">
+            </div>
+        </div>
+        
+        <button onclick="saveAccountDetails()" id="btn-save-account-details" class="w-full bg-green-600 text-white font-bold py-3 mt-5 rounded-lg shadow hover:bg-green-700 transition flex justify-center items-center gap-2">পরিবর্তন করুন</button>
+    </div>
+</div>
+
+<!-- PASSWORD CHANGE MODAL -->
+<div id="password-change-modal" class="fixed inset-0 bg-black bg-opacity-80 z-[160] flex items-center justify-center hidden-custom p-4">
+    <div class="bg-white w-full max-w-sm rounded-xl p-5 shadow-2xl relative">
+        <button onclick="closePasswordChangeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">পাসওয়ার্ড পরিবর্তন</h3>
+
+        <div class="space-y-3">
+            <div>
+                <label class="text-xs font-bold text-gray-500 block mb-1">পুরাতন পাসওয়ার্ড</label>
+                <div class="relative w-full">
+                    <input type="password" id="old-password" placeholder="বর্তমান পাসওয়ার্ড দিন" class="w-full bg-white border border-gray-200 p-2.5 rounded-lg text-sm focus:ring-1 focus:ring-green-500 pr-10">
+                    <i onclick="togglePassword('old-password', this)" class="fa-regular fa-eye absolute right-3 top-3 text-gray-400 cursor-pointer"></i>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 block mb-1">নতুন পাসওয়ার্ড</label>
+                <div class="relative w-full">
+                    <input type="password" id="new-password" placeholder="নতুন পাসওয়ার্ড দিন (কমপক্ষে ৬ সংখ্যা)" class="w-full bg-white border border-gray-200 p-2.5 rounded-lg text-sm focus:ring-1 focus:ring-green-500 pr-10">
+                    <i onclick="togglePassword('new-password', this)" class="fa-regular fa-eye absolute right-3 top-3 text-gray-400 cursor-pointer"></i>
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-500 block mb-1">নতুন পাসওয়ার্ড নিশ্চিত করুন</label>
+                <div class="relative w-full">
+                    <input type="password" id="confirm-new-password" placeholder="নতুন পাসওয়ার্ডটি পুনরায় লিখুন" class="w-full bg-white border border-gray-200 p-2.5 rounded-lg text-sm focus:ring-1 focus:ring-green-500 pr-10">
+                    <i onclick="togglePassword('confirm-new-password', this)" class="fa-regular fa-eye absolute right-3 top-3 text-gray-400 cursor-pointer"></i>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="submitPasswordChange()" id="btn-save-password" class="w-full bg-green-600 text-white font-bold py-3 mt-5 rounded-lg shadow hover:bg-green-700 transition flex justify-center items-center gap-2">পরিবর্তন করুন</button>
+    </div>
+</div>
+
 <!-- ৫. মেইন অ্যাপ কন্টেইনার -->
 <div class="app-container hidden-custom" id="main-app">
     <header class="bg-white text-gray-800 p-4 sticky top-0 z-40 flex justify-between items-center shadow-sm border-b pt-safe">
@@ -655,6 +725,18 @@
                 </div>
             </div>
             <div class="bg-gray-100 pb-20">
+                <!-- হোমপেজ ফ্রেন্ড সাজেশন সেকশন -->
+        <div id="home-friend-suggestions-container" class="hidden bg-white mb-2 py-4 shadow-sm border-b">
+            <div class="px-4 flex justify-between items-center mb-3">
+                <h3 class="font-bold text-gray-800 text-sm">চেনা মানুষ হতে পারে</h3>
+                <button onclick="switchPage('people')" class="text-xs text-blue-600 font-bold hover:underline">সব দেখুন</button>
+            </div>
+            <!-- অনুভূমিকভাবে স্ক্রল করার কন্টেইনার -->
+            <div id="home-friend-suggestions-list" class="flex gap-3 px-4 overflow-x-auto pb-2" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <!-- প্রোফাইল কার্ডগুলো এখানে লোড হবে -->
+            </div>
+            <style> #home-friend-suggestions-list::-webkit-scrollbar { display: none; } </style>
+        </div>
                 <div id="news-feed" class="px-0 space-y-3 min-h-[300px] mt-2">
                     <!-- Initial Loader Skeleton -->
                     <div class="flex flex-col gap-3 p-4" id="initial-feed-skeleton">
@@ -1031,7 +1113,12 @@
                     <div class="p-4 space-y-4">
                         <div onclick="toggleEditProfile(true)" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">প্রোফাইল এডিট</span><i class="fa-solid fa-pen-to-square text-gray-400 text-lg"></i></div>
                         <div class="flex items-center justify-between p-2"><span class="text-base text-gray-700">মোবাইল/ইমেইল গোপন রাখুন</span><input type="checkbox" onchange="togglePrivacy(this.checked)" id="setting-privacy-toggle" class="w-6 h-6 text-green-600 rounded"></div>
-                        <div onclick="toggleAuth('forgot'); handleLogout()" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">পাসওয়ার্ড পরিবর্তন</span><i class="fa-solid fa-key text-gray-400 text-lg"></i></div>
+                        <div onclick="openPasswordChangeModal()" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition"><span class="text-base text-gray-700">পাসওয়ার্ড পরিবর্তন</span><i class="fa-solid fa-key text-gray-400 text-lg"></i></div>
+                        <!-- সম্পূর্ণ আলাদা ইমেইল ও মোবাইল নাম্বার অপশন -->
+<div onclick="openAccountDetailsModal()" class="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+    <span class="text-base text-gray-700">ইমেইল ও মোবাইল নাম্বার</span>
+    <i class="fa-solid fa-address-book text-gray-400 text-lg"></i>
+</div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -1161,13 +1248,26 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, onChildAdded, onChildChanged, get, update, remove, query, limitToLast, runTransaction, startAt, endAt, orderByChild, orderByKey, equalTo, limitToFirst } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser, updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     
     // --- CONFIGURATION ---
     const APP_CONFIG = {
         firebase: { apiKey: "AIzaSyBfI-THOXOvhyL7LumZVKixtTVwF94CjsI", authDomain: "pathargata-digital-comnity-ltd.firebasestorage.app", databaseURL: "https://pathargata-digital-comnity-ltd-default-rtdb.firebaseio.com", projectId: "pathargata-digital-comnity-ltd", storageBucket: "pathargata-digital-comnity-ltd.firebasestorage.app", messagingSenderId: "991014085926", appId: "1:991014085926:android:b249e489d8424433ed4de7" },
         locations: { "Patharghata Union Sadar": ["পাথরঘাটা", "গহরপুর", "নিজলাঠিমারা", "হাতেমপুর", "বড়ইতলা", "বড় টেংরা", "কোড়ালিয়া", "রুহিতা", "পদ্মা", "হাড়িটানা", "বাদুরতলা", "চরলাঠিমারা"], "Char Duani Union": ["চরদুয়ানী", "দক্ষিণ চরদুয়ানী", "মঠের খাল", "হোগলাপাশা", "গাববাড়িয়া"], "Kakchira Union": ["কাকচিরা", "জালিয়াঘাটা", "রূপধন", "বাইলাচারা"], "Kalmegha Union": ["কালমেঘা", "ঘুটাবাছা", "কুপদোন", "পশ্চিম কালমেঘা"], "Kathaltoli Union": ["কাঁঠালতলী", "তালতলী", "সাপলেজা", "করুণা"], "Nachnapara Union": ["নাচনাপাড়া", "জ্ঞানপাড়া", "বাঁশতলা", "মানিকখালী"], "Raihanpur Union": ["রায়হানপুর", "শতকর", "লেমুয়া", "হরিণঘাটা"] },
-        services: { "directory": { title: "ডিরেক্টরি", icon: "fa-address-book", color: "text-blue-600", bg: "bg-blue-50" }, "blood": { title: "রক্তদান", icon: "fa-droplet", color: "text-red-600", bg: "bg-red-50" }, "emergency": { title: "জরুরী এলার্ট", icon: "fa-triangle-exclamation", color: "text-red-600", bg: "bg-red-50" }, "history_tourism": { title: "পর্যটন", icon: "fa-landmark", color: "text-purple-600", bg: "bg-purple-50" }, "transport": { title: "পরিবহন", icon: "fa-bus", color: "text-teal-600", bg: "bg-teal-50" }, "education": { title: "শিক্ষা", icon: "fa-graduation-cap", color: "text-yellow-600", bg: "bg-yellow-50" }, "complaints": { title: "অভিযোগ", icon: "fa-box-archive", color: "text-red-600", bg: "bg-red-50" }, "market": { title: "হাট", icon: "fa-store", color: "text-orange-600", bg: "bg-orange-50" } }
+        services: { 
+            "directory": { title: "ডিরেক্টরি", icon: "fa-address-book", color: "text-blue-600", bg: "bg-blue-50" }, 
+            "blood": { title: "রক্তদান", icon: "fa-droplet", color: "text-red-600", bg: "bg-red-50" }, 
+            "emergency": { title: "জরুরী এলার্ট", icon: "fa-triangle-exclamation", color: "text-red-600", bg: "bg-red-50" }, 
+            "history_tourism": { title: "পর্যটন", icon: "fa-landmark", color: "text-purple-600", bg: "bg-purple-50" }, 
+            "transport": { title: "পরিবহন", icon: "fa-bus", color: "text-teal-600", bg: "bg-teal-50" }, 
+            "education": { title: "শিক্ষা", icon: "fa-graduation-cap", color: "text-yellow-600", bg: "bg-yellow-50" }, 
+            "complaints": { title: "অভিযোগ", icon: "fa-box-archive", color: "text-red-600", bg: "bg-red-50" }, 
+            "market": { title: "হাট", icon: "fa-store", color: "text-orange-600", bg: "bg-orange-50" },
+            "birth_reg": { title: "জন্ম নিবন্ধন", icon: "fa-address-card", color: "text-blue-600", bg: "bg-blue-50" },
+            "tin_cert": { title: "টিন সার্টিফিকেট", icon: "fa-file-invoice-dollar", color: "text-indigo-600", bg: "bg-indigo-50" },
+            "agriculture": { title: "কৃষি সেবা", icon: "fa-leaf", color: "text-green-600", bg: "bg-green-50" },
+            "result": { title: "বোর্ড রেজাল্ট", icon: "fa-award", color: "text-pink-600", bg: "bg-pink-50" }
+        }
     };
 
     const app = initializeApp(APP_CONFIG.firebase);
@@ -1215,7 +1315,34 @@
 
     // --- HELPER FUNCTIONS ---
     window.escapeHTML = (str) => { if (!str) return ""; return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
-    window.showToast = (msg, type = 'success') => { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = 'toast'; toast.innerText = msg; toast.style.borderLeft = type === 'error' ? "4px solid #ef4444" : "4px solid #22c55e"; container.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(()=> toast.remove(), 300); }, 3000); }
+    // --- আপডেট করা টোস্ট নোটিফিকেশন সিস্টেম ---
+    window.showToast = (msg, type = 'success') => { 
+        const container = document.getElementById('toast-container'); 
+        
+        // ট্রিক: নতুন মেসেজ আসার আগে আগের সব মেসেজ ক্লিয়ার করে দেওয়া হবে
+        container.innerHTML = ''; 
+
+        const toast = document.createElement('div'); 
+        // ডিজাইন একটু সুন্দর করার জন্য ফ্লেক্স ও গ্যাপ যোগ করা হলো
+        toast.className = 'toast flex items-center justify-center gap-2'; 
+        
+        // মেসেজের সাথে সুন্দর আইকন
+        const icon = type === 'error' ? '<i class="fa-solid fa-circle-exclamation"></i>' : '<i class="fa-solid fa-circle-check"></i>';
+        toast.innerHTML = `${icon} <span>${msg}</span>`; 
+        
+        // বর্ডার কালার
+        toast.style.borderLeft = type === 'error' ? "4px solid #ef4444" : "4px solid #22c55e"; 
+        
+        container.appendChild(toast); 
+        
+        // ৩ সেকেন্ড পর মুছে যাবে
+        setTimeout(() => { 
+            toast.style.opacity = '0'; 
+            setTimeout(()=> {
+                if(toast.parentElement) toast.remove();
+            }, 300); 
+        }, 3000); 
+    };
     window.togglePassword = (id, icon) => { const input = document.getElementById(id); if (input.type === "password") { input.type = "text"; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } else { input.type = "password"; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); } };
     function timeAgo(timestamp) { const seconds = Math.floor((Date.now() - timestamp) / 1000); if (seconds < 60) return "এইমাত্র"; const minutes = Math.floor(seconds / 60); if (minutes < 60) return minutes + " মিনিট আগে"; const hours = Math.floor(minutes / 60); if (hours < 24) return hours + " ঘণ্টা আগে"; const days = Math.floor(hours / 24); if (days < 30) return days + " দিন আগে"; const months = Math.floor(days / 30); if (months < 12) return months + " মাস আগে"; return Math.floor(months / 12) + " বছর আগে"; }
     function checkUserBadge(user) { if (!user) return ""; const role = user.role ? user.role.toLowerCase() : ''; if (role === 'journalist') return `<i class="fa-solid fa-feather-pointed journalist-badge"></i>`; if (user.isVerified || ['chairman', 'member', 'admin', 'doctor', 'uno', 'oc'].includes(role)) return `<i class="fa-solid fa-circle-check verified-badge"></i>`; return ""; }
@@ -1476,7 +1603,23 @@ async function uploadMediaToCloudinary(file) {
         get(ref(db, 'services/categories')).then((snap) => { 
             const categories = { ...APP_CONFIG.services, ...(snap.val() || {}) }; 
             grid.innerHTML = Object.entries(categories).map(([key, cat]) => {
-                let onclick = ['directory', 'blood', 'complaints', 'market', 'emergency'].includes(key) ? `switchPage('${key}')` : `openDynamicCategory('${key}', '${cat.title}')`; 
+                let onclick;
+                // কোন সার্ভিসে ক্লিক করলে কোথায় যাবে তার লজিক
+                if (['directory', 'blood', 'complaints', 'market', 'emergency'].includes(key)) {
+                    onclick = `switchPage('${key}')`;
+                } else if (key === 'birth_reg') {
+                    onclick = `window.open('https://bdris.gov.bd/', '_blank')`;
+                } else if (key === 'tin_cert') {
+                    onclick = `window.open('https://secure.incometax.gov.bd/TINHome', '_blank')`;
+                } else if (key === 'result') {
+                    // বোর্ড পরীক্ষার রেজাল্ট দেখার সরকারি ওয়েবসাইট
+                    onclick = `window.open('https://eboardresults.com/v2/home', '_blank')`;
+                } else if (key === 'agriculture') {
+                    onclick = `openDirectoryCategory('agriculture', '${cat.title}')`;
+                } else {
+                    onclick = `openDynamicCategory('${key}', '${cat.title}')`;
+                }
+                
                 return `<div onclick="${onclick}" class="cursor-pointer group transform active:scale-95 transition bg-white border border-gray-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md aspect-[4/3]"><div class="w-14 h-14 ${cat.bg} ${cat.color} rounded-full flex items-center justify-center mb-2"><i class="fa-solid ${cat.icon} text-2xl"></i></div><p class="text-base font-bold text-gray-700 text-center">${cat.title}</p></div>`;
             }).join('');
         });
@@ -1725,16 +1868,53 @@ async function uploadMediaToCloudinary(file) {
         users.forEach(u => checkRequestStatus(u.uid));
     }
     
+    // --- পোস্ট ফর্ম সম্পূর্ণ ক্লিয়ার করার ফাংশন ---
+    window.resetPostForm = () => {
+        // ১. টেক্সট ক্লিয়ার করা
+        document.getElementById('post-text').value = "";
+        
+        // ২. ব্যাকগ্রাউন্ড কালার রিসেট করা
+        document.getElementById('selected-post-color').value = "";
+        const ta = document.getElementById('post-text');
+        ta.style.background = 'transparent';
+        ta.style.color = 'black';
+        ta.style.fontWeight = 'normal';
+        ta.style.textAlign = 'left';
+        ta.style.fontSize = '18px';
+        ta.style.paddingTop = '0px';
+        document.querySelectorAll('.post-color-dot').forEach(el => el.classList.remove('selected'));
+        document.getElementById('color-picker-wrapper').style.display = 'block';
+
+        // ৩. ছবি ক্লিয়ার করা
+        document.getElementById('post-image-file').value = "";
+        document.getElementById('image-preview-area').classList.add('hidden');
+        document.getElementById('preview-grid').innerHTML = "";
+        window.selectedImages =[];
+
+        // ৪. ভয়েস রেকর্ড ক্লিয়ার করা
+        window.cancelRecording();
+        document.getElementById('voice-record-area').classList.add('hidden');
+
+        // ৫. অন্যান্য অপশন ক্লিয়ার করা
+        window.taggedUsers =[];
+        window.selectedFeeling = null;
+        document.getElementById('post-mobile').value = "";
+        document.getElementById('post-social-link').value = "";
+        document.getElementById('post-privacy').value = "public";
+    };
+
     // --- UPDATED SUBMIT POST ---
     window.submitPost = async () => {
         const text = document.getElementById('post-text').value.trim();
-        const files = window.selectedImages;
+        const files = window.selectedImages ||[];
         const bgColor = document.getElementById('selected-post-color').value;
         const privacy = document.getElementById('post-privacy').value;
         const mobile = document.getElementById('post-mobile').value.trim();
         const socialLink = document.getElementById('post-social-link').value.trim();
         
-        if(!text && files.length === 0 && !window.selectedFeeling && !audioBlob) return showToast("কিছু লিখুন অথবা রেকর্ড করুন!", 'error');
+        if(!text && files.length === 0 && !window.selectedFeeling && !audioBlob) {
+            return showToast("কিছু লিখুন অথবা রেকর্ড করুন!", 'error');
+        }
         
         const btn = document.getElementById('btn-post-submit'); 
         const originalBtnText = btn.innerHTML; 
@@ -1742,7 +1922,7 @@ async function uploadMediaToCloudinary(file) {
         btn.disabled = true;
         
         try {
-            let mediaUrls = [];
+            let mediaUrls =[];
             let voiceUrl = null;
             let postType = 'text';
 
@@ -1787,16 +1967,10 @@ async function uploadMediaToCloudinary(file) {
             
             await push(ref(db, 'posts'), newPostData);
             
-            document.getElementById('post-text').value = ""; 
-            selectPostColor(''); 
-            removePostImage(); 
-            window.cancelRecording(); 
-            window.toggleVoiceRecorder(); 
-            window.selectedImages = []; 
-            window.taggedUsers = []; 
-            window.selectedFeeling = null;
+            // মডাল সম্পূর্ণ রিসেট এবং বন্ধ করা
+            window.resetPostForm();
             togglePostModal(false); 
-            showToast("পোস্ট করা হয়েছে!");
+            showToast("পোস্ট করা হয়েছে!", "success");
             
             if(privacy !== 'only_me') notifyFriends(newPostData.uid, userDetails.name);
             loadFeed(currentFeedFilter, true);
@@ -2086,7 +2260,8 @@ async function uploadMediaToCloudinary(file) {
                 if(!s.exists() && !r.exists()) filteredUsers.push(u);
             }));
             allUsers = filteredUsers; 
-            updatePeopleTab(); 
+            updatePeopleTab();
+             if(window.renderHomeSuggestions) window.renderHomeSuggestions();
             if(!document.getElementById('search-people').value) {
                  renderPeopleList(allUsers, false);
             }
@@ -3096,6 +3271,225 @@ async function uploadMediaToCloudinary(file) {
             else showToast("রুলস লিংক পাওয়া যায়নি", "error");
         });
     }
+    // --- ACCOUNT DETAILS & 60 DAYS LOGIC ---
+    
+    window.openAccountDetailsModal = () => {
+        const modal = document.getElementById('account-details-modal');
+        modal.classList.remove('hidden-custom');
+        history.pushState({ modal: 'account-details-modal' }, null, "#account-details");
+
+        // বর্তমান ইমেইল ও নাম্বার প্রদর্শন করা
+        document.getElementById('current-display-email').innerText = userDetails.email || "দেওয়া নেই";
+        document.getElementById('current-display-phone').innerText = userDetails.phone || "দেওয়া নেই";
+
+        // ইনপুট বক্সেও বর্তমান ডাটা বসিয়ে দেওয়া (যাতে সহজে এডিট করা যায়)
+        document.getElementById('update-new-email').value = userDetails.email || "";
+        document.getElementById('update-new-phone').value = userDetails.phone || "";
+
+        // ৬০ দিনের লজিক চেক
+        const lastUpdate = userDetails.last_contact_update || 0;
+        const now = Date.now();
+        const days60Ms = 60 * 24 * 60 * 60 * 1000;
+        const timePassed = now - lastUpdate;
+
+        const infoBox = document.getElementById('account-update-info');
+        const emailInput = document.getElementById('update-new-email');
+        const phoneInput = document.getElementById('update-new-phone');
+        const btn = document.getElementById('btn-save-account-details');
+
+        if (lastUpdate !== 0 && timePassed < days60Ms) {
+            // যদি ৬০ দিন পার না হয়
+            const daysLeft = Math.ceil((days60Ms - timePassed) / (1000 * 60 * 60 * 24));
+            infoBox.className = "bg-red-50 text-red-700 text-xs p-3 rounded-lg mb-4 border border-red-200";
+            infoBox.innerHTML = `<i class="fa-solid fa-lock mr-1"></i> আপনি সম্প্রতি তথ্য পরিবর্তন করেছেন। আরও <b>${daysLeft} দিন</b> পর আবার পরিবর্তন করতে পারবেন।`;
+            emailInput.disabled = true; 
+            phoneInput.disabled = true;
+            btn.classList.add('hidden'); // বাটন লুকিয়ে রাখা
+        } else {
+            // যদি পরিবর্তন করা সম্ভব হয়
+            infoBox.className = "bg-blue-50 text-blue-700 text-xs p-3 rounded-lg mb-4 border border-blue-100";
+            infoBox.innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i> আপনি প্রতি <b>৬০ দিনে</b> মাত্র একবার তথ্য পরিবর্তন করতে পারবেন।`;
+            emailInput.disabled = false; 
+            phoneInput.disabled = false;
+            btn.classList.remove('hidden');
+        }
+    };
+
+    window.closeAccountDetailsModal = () => {
+        document.getElementById('account-details-modal').classList.add('hidden-custom');
+        if(history.state?.modal === 'account-details-modal') history.back();
+    };
+
+    window.saveAccountDetails = async () => {
+        const newEmail = document.getElementById('update-new-email').value.trim();
+        const newPhone = document.getElementById('update-new-phone').value.trim();
+
+        if(!newEmail || !newPhone) return showToast("ইমেইল ও মোবাইল নাম্বার দিন", "error");
+        if(!/^01[3-9]\d{8}$/.test(newPhone)) return showToast("সঠিক মোবাইল নম্বর দিন (১১ ডিজিট)", "error");
+
+        // যদি ইউজার কোনো কিছু পরিবর্তন না করেই সেভ বাটনে ক্লিক করে
+        if(newEmail === userDetails.email && newPhone === userDetails.phone) {
+            return showToast("আপনি কোনো তথ্য পরিবর্তন করেননি!", "error");
+        }
+
+        const btn = document.getElementById('btn-save-account-details');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> সেভ হচ্ছে...';
+        btn.disabled = true;
+
+        try {
+            // ডাটাবেসে নতুন তথ্য এবং পরিবর্তনের সময় সেভ করা
+            await update(ref(db, 'users/' + window.currentUser.uid), {
+                email: newEmail,
+                phone: newPhone,
+                last_contact_update: Date.now()
+            });
+
+            // লোকালি ডাটা আপডেট করা
+            userDetails.email = newEmail;
+            userDetails.phone = newPhone;
+            userDetails.last_contact_update = Date.now();
+            updateUIWithUserData(); 
+
+            showToast("তথ্য সফলভাবে পরিবর্তন হয়েছে!", "success");
+            closeAccountDetailsModal();
+        } catch (e) {
+            showToast("ত্রুটি: " + e.message, "error");
+        } finally {
+            btn.innerHTML = "পরিবর্তন করুন";
+            btn.disabled = false;
+        }
+    };
+    // --- PASSWORD CHANGE LOGIC ---
+    window.openPasswordChangeModal = () => {
+        const modal = document.getElementById('password-change-modal');
+        modal.classList.remove('hidden-custom');
+        history.pushState({ modal: 'password-change-modal' }, null, "#change-password");
+        
+        // ফর্ম ক্লিয়ার করে দেওয়া
+        document.getElementById('old-password').value = "";
+        document.getElementById('new-password').value = "";
+        document.getElementById('confirm-new-password').value = "";
+    };
+
+    window.closePasswordChangeModal = () => {
+        document.getElementById('password-change-modal').classList.add('hidden-custom');
+        if(history.state?.modal === 'password-change-modal') history.back();
+    };
+
+    window.submitPasswordChange = async () => {
+        const oldPass = document.getElementById('old-password').value;
+        const newPass = document.getElementById('new-password').value;
+        const confirmPass = document.getElementById('confirm-new-password').value;
+
+        if(!oldPass || !newPass || !confirmPass) {
+            return showToast("সবগুলো ফিল্ড পূরণ করুন", "error");
+        }
+        if(newPass.length < 6) {
+            return showToast("নতুন পাসওয়ার্ড কমপক্ষে ৬ সংখ্যার হতে হবে", "error");
+        }
+        if(newPass !== confirmPass) {
+            return showToast("নতুন পাসওয়ার্ডগুলো মিলছে না", "error");
+        }
+
+        const btn = document.getElementById('btn-save-password');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> পরিবর্তন হচ্ছে...';
+        btn.disabled = true;
+
+        try {
+            // ১. ব্যবহারকারীর পুরাতন পাসওয়ার্ড দিয়ে যাচাই (Re-authenticate) করা
+            const credential = EmailAuthProvider.credential(window.currentUser.email, oldPass);
+            await reauthenticateWithCredential(window.currentUser, credential);
+
+            // ২. নতুন পাসওয়ার্ড সেট করা
+            await updatePassword(window.currentUser, newPass);
+
+            showToast("পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!", "success");
+            closePasswordChangeModal();
+        } catch (error) {
+            console.error(error);
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                showToast("পুরাতন পাসওয়ার্ডটি ভুল হয়েছে", "error");
+            } else if (error.code === 'auth/too-many-requests') {
+                showToast("অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।", "error");
+            } else {
+                showToast("সমস্যা হয়েছে: " + error.message, "error");
+            }
+        } finally {
+            btn.innerHTML = "পরিবর্তন করুন";
+            btn.disabled = false;
+        }
+    };
+    // --- HOME PAGE FRIEND SUGGESTIONS LOGIC ---
+    window.renderHomeSuggestions = () => {
+        const container = document.getElementById('home-friend-suggestions-container');
+        const list = document.getElementById('home-friend-suggestions-list');
+        if(!container || !list) return;
+
+        // প্রথম ৮ জনকে সাজেশন হিসেবে দেখাবে
+        const suggestions = allUsers.slice(0, 8);
+
+        if(suggestions.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+
+        container.classList.remove('hidden');
+
+        list.innerHTML = suggestions.map(u => {
+            let av = u.profile_pic 
+                ? `<img src="${u.profile_pic}" class="w-16 h-16 rounded-full object-cover mb-2 border border-gray-100 shadow-sm">` 
+                : `<div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl mb-2 shadow-sm">${u.name?escapeHTML(u.name).charAt(0):'U'}</div>`;
+
+            return `
+            <div class="min-w-[130px] max-w-[130px] bg-white border border-gray-200 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm shrink-0">
+                <div onclick="openUserProfile('${u.uid}')" class="cursor-pointer flex flex-col items-center w-full">
+                    ${av}
+                    <h4 class="font-bold text-gray-800 text-[13px] truncate w-full mb-3">${escapeHTML(u.name.split(' ')[0])}</h4>
+                </div>
+                <button id="btn-home-req-${u.uid}" onclick="toggleHomeFriendReq('${u.uid}')" class="w-full bg-blue-50 text-blue-600 py-1.5 rounded-lg font-bold text-[11px] hover:bg-blue-100 transition active:scale-95 flex justify-center items-center gap-1"><i class="fa-solid fa-user-plus"></i> Add</button>
+            </div>`;
+        }).join('');
+
+        // রিকোয়েস্ট আগে থেকেই পাঠানো আছে কিনা চেক করা
+        suggestions.forEach(u => {
+            get(ref(db, `friend_requests/${u.uid}/${window.currentUser.uid}`)).then(s => {
+                const btn = document.getElementById(`btn-home-req-${u.uid}`);
+                if(btn && s.exists()) {
+                    btn.classList.replace('bg-blue-50', 'bg-gray-200');
+                    btn.classList.replace('text-blue-600', 'text-gray-600');
+                    btn.innerHTML = 'Cancel';
+                }
+            });
+        });
+    };
+
+    window.toggleHomeFriendReq = (toUid) => {
+        const btn = document.getElementById(`btn-home-req-${toUid}`);
+        const isCancel = btn.innerText.includes('Cancel');
+        btn.disabled = true; btn.innerText = "...";
+
+        const refPath = `friend_requests/${toUid}/${window.currentUser.uid}`;
+        const action = isCancel ? remove(ref(db, refPath)) : set(ref(db, refPath), { fromName: userDetails.name, fromUid: window.currentUser.uid, timestamp: Date.now() });
+
+        action.then(() => {
+            showToast(isCancel ? "রিকুয়েস্ট বাতিল করা হয়েছে" : "রিকুয়েস্ট পাঠানো হয়েছে!");
+            if (isCancel) {
+                btn.classList.replace('bg-gray-200', 'bg-blue-50');
+                btn.classList.replace('text-gray-600', 'text-blue-600');
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Add';
+            } else {
+                btn.classList.replace('bg-blue-50', 'bg-gray-200');
+                btn.classList.replace('text-blue-600', 'text-gray-600');
+                btn.innerHTML = 'Cancel';
+            }
+            btn.disabled = false;
+            // পিপল পেজের বাটনও আপডেট করে দেওয়া
+            if(window.checkRequestStatus) window.checkRequestStatus(toUid);
+        }).catch(e => {
+            showToast("ত্রুটি: " + e.message, 'error');
+            btn.disabled = false;
+        });
+    };
 
 </script>
 
@@ -3114,6 +3508,7 @@ async function uploadMediaToCloudinary(file) {
         } else {
             document.getElementById('post-modal').classList.add('hidden-custom');
             if(history.state?.modal === 'post-modal') history.back();
+            if(window.resetPostForm) window.resetPostForm(); // মডাল বন্ধ হলে সব ক্লিয়ার হয়ে যাবে
         }
     }
 
@@ -3230,6 +3625,7 @@ async function uploadMediaToCloudinary(file) {
         if (!document.getElementById('emergency-modal').classList.contains('hidden-custom')) { document.getElementById('emergency-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('sell-modal').classList.contains('hidden-custom')) { document.getElementById('sell-modal').classList.add('hidden-custom'); return; }
         if (!document.getElementById('edit-profile-modal').classList.contains('hidden-custom')) { document.getElementById('edit-profile-modal').classList.add('hidden-custom'); return; }
+        if (!document.getElementById('account-details-modal').classList.contains('hidden-custom')) { closeAccountDetailsModal(); return; }
         // Verification modal removed in this update, handled by page
         
         if(document.getElementById('search-modal').classList.contains('open')) { toggleGlobalSearch(false); return; }
