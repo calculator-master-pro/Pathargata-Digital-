@@ -1,13 +1,13 @@
 {
   "name": "Patharghata Digital",
-  "short_name": "Patharghata Digital",
+  "short_name": "Patharghata",
   "start_url": "/Pathargata-Digital-/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
   "icons": [
     {
-      "src": "https://drive.google.com/file/d/1_CUqVGizxqibSQPDji3dbzkTZ1-6XC75/view?usp=drivesdk",
+      "src": "logo.png", 
       "sizes": "512x512",
       "type": "image/png"
     }
